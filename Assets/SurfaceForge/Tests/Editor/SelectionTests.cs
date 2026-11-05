@@ -179,6 +179,43 @@ namespace SurfaceForge.Tests
         }
 
         [UnityTest]
+        public IEnumerator NewSceneDragCancelsOlderDeferredClick()
+        {
+            var prop=Spawn("Cube",point); var hit=HitPoint(prop);
+            State(hit,true); yield return Frames();
+            var pendingField=typeof(PropSelectionController).GetField("pending",
+                System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+            var queued=false;
+            Canvas.WillRenderCanvases nextGesture=()=>
+            {
+                // Queue the next gesture after the release LateUpdate, before its deferred
+                // click can resolve. Rendering follows LateUpdate; input runs next real frame.
+                if(queued || !(bool)pendingField.GetValue(selection)) return;
+                queued=true;
+                State(hit,true); State(hit+Vector2.right*30,true);
+            };
+            Canvas.willRenderCanvases+=nextGesture;
+            try
+            {
+                State(hit,false); yield return Frames(6);
+                Assert.That(queued,Is.True,"Release candidate was not observed before next frame");
+                Assert.That(selection.Selected,Is.Null,"Old deferred click reopened selection during a newer drag");
+                Assert.That(menu.Target,Is.Null);
+                State(hit+Vector2.right*30,false); yield return Frames();
+                Assert.That(selection.Selected,Is.Null); Assert.That(menu.Target,Is.Null);
+                State(hit,false); yield return Frames();
+                // Also supersede a prior release before it has reached LateUpdate at all.
+                State(hit,true); State(hit,false); State(hit,true); State(hit+Vector2.right*30,true);
+                yield return Frames();
+                Assert.That(selection.Selected,Is.Null,"Same-batch older release survived the newer drag");
+                State(hit+Vector2.right*30,false); yield return Frames();
+                Assert.That(selection.Selected,Is.Null); Assert.That(menu.Target,Is.Null);
+                yield return Click(hit); Assert.That(selection.Selected,Is.SameAs(prop));
+            }
+            finally { Canvas.willRenderCanvases-=nextGesture; }
+        }
+
+        [UnityTest]
         public IEnumerator PlacementReleaseIsSuppressedAndFreshClickWorks()
         {
             var prop = Spawn("Cone",point);
