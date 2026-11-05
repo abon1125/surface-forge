@@ -168,6 +168,8 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 
 ## 10. 目前交付追蹤
 
+> 以下保留還原版本的歷史規劃狀態，不代表目前實作進度；目前已實作 M1～M4，實際驗證結果與待驗收項目請參閱 README 與 Docs/M1Validation.md～Docs/M4Validation.md。
+
 | 項目 | 狀態 |
 | --- | --- |
 | 開發規格與代理規範 | 已建立文件；尚未代表實作完成 |
