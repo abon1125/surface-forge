@@ -32,7 +32,7 @@ M4 regression coverage includes all four real prefab child colliders and names, 
 
 ## Self review and cloud review
 
-Self review covers explicit bindings, collider ownership and layers, UI raycasts before and after release, asynchronous destruction, shared assets, gesture arbitration, listener cleanup, target invalidation and final camera/canvas positioning. No binary assets receive YAML line-ending conversion. The local development plan, existing `.vscode/`, SceneTemplateSettings and legacy LFS stash are excluded. Temporary Unity Skills author/validation tools use prefixed discovered schemas and dry-run; they are removed before delivery.
+Self review covers explicit bindings, collider ownership and layers, UI raycasts before and after release, asynchronous destruction, shared assets, gesture arbitration, listener cleanup, target invalidation and final camera/canvas positioning. No binary assets receive YAML line-ending conversion. The existing `.vscode/`, SceneTemplateSettings and legacy LFS stash are excluded. Temporary Unity Skills author/validation tools use prefixed discovered schemas and dry-run; they are removed before delivery.
 
 Initial cloud review completed for `86a6c20` and raised one valid P2: end-of-update position lost the actual press origin when press/movement/release shared a Dynamic update. Fixed in `58d6350`. Re-review of that head found the newer-drag/older-click P2 described above; it is addressed separately with reproduction and regression. Head-specific final re-review results are tracked in the M4 PR discussion and description. Pending, failed or unavailable review is not a pass. PR merge remains the user's action.
 
