@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 932dda7fd2657ef439e4ac1a9a262862, type: 3}
+  m_Name: Sphere
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceForge.PropDefinition
+  id: sphere
+  displayName: Sphere
+  icon: {fileID: 6977829799311990860, guid: 8d66be3dcf1ba434a8ffec40f7e030b6, type: 3}
+  prefab: {fileID: 2658424754701346472, guid: 07a2007ac827eda46955a1ab2dfd8b6f, type: 3}
