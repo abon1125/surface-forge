@@ -1,1 +1,1 @@
-{"name":"SurfaceForge.Tests","references":["SurfaceForge","Unity.ugui"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"]}
+{"name":"SurfaceForge.Tests","references":["SurfaceForge","Unity.ugui","Unity.InputSystem"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"]}
