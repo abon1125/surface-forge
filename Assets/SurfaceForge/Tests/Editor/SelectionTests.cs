@@ -156,6 +156,29 @@ namespace SurfaceForge.Tests
         }
 
         [UnityTest]
+        public IEnumerator BatchedPressMovementReleasePreservesUIOriginAndDragDistance()
+        {
+            var prop=Spawn("Cube",point); var hit=HitPoint(prop);
+            var sidebar=Field<RectTransform>(menu,"sidebar");
+            var ui=RectTransformUtility.WorldToScreenPoint(null,sidebar.position);
+            State(ui,false); yield return Frames();
+            State(ui,true); State(hit,true); State(hit,false);
+            yield return Frames();
+            Assert.That(selection.Selected,Is.Null,"Batched UI-origin drag selected a prop");
+            State(hit,false); yield return Frames();
+            State(hit,true); State(hit+Vector2.right*30,true); State(hit,false);
+            yield return Frames();
+            Assert.That(selection.Selected,Is.Null,"Batched out-and-back movement became a click");
+            State(hit,true); State(hit,false);
+            yield return Frames();
+            Assert.That(selection.Selected,Is.SameAs(prop),"A genuine batched click must still work");
+            selection.ClearSelection();
+            State(hit,true); State(hit,false); State(hit+Vector2.right*40,false);
+            yield return Frames();
+            Assert.That(selection.Selected,Is.SameAs(prop),"Movement after release must not move the click");
+        }
+
+        [UnityTest]
         public IEnumerator PlacementReleaseIsSuppressedAndFreshClickWorks()
         {
             var prop = Spawn("Cone",point);
@@ -181,6 +204,29 @@ namespace SurfaceForge.Tests
             Assert.That(placement.Begin(row,definition,hit), Is.True);
             placement.Cancel(); State(hit,false); yield return Frames();
             Assert.That(selection.Selected, Is.Null);
+        }
+
+        [Test]
+        public void EventMergingSettingIsScopedAndRestoredAcrossEnableCycles()
+        {
+            selection.enabled=false;
+            var settings=InputSystem.settings;
+            var original=settings.disableRedundantEventsMerging;
+            try
+            {
+                settings.disableRedundantEventsMerging=false;
+                for(var i=0;i<20;i++)
+                {
+                    selection.enabled=true;
+                    Assert.That(settings.disableRedundantEventsMerging,Is.True);
+                    selection.enabled=false;
+                    Assert.That(settings.disableRedundantEventsMerging,Is.False);
+                }
+                settings.disableRedundantEventsMerging=true;
+                selection.enabled=true; selection.enabled=false;
+                Assert.That(settings.disableRedundantEventsMerging,Is.True);
+            }
+            finally { settings.disableRedundantEventsMerging=original; selection.enabled=true; }
         }
 
         [UnityTest]

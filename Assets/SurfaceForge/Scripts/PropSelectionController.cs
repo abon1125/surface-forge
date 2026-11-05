@@ -13,14 +13,22 @@ namespace SurfaceForge
         [SerializeField] private LayerMask placedPropMask;
         [SerializeField, Min(1)] private float maxRayDistance = 500;
         public PlacedProp Selected { get; private set; }
-        private bool pressed, rejected, pending;
-        private Vector2 pressPosition, releasePosition;
-        private int pressFrame, releaseFrame, pendingPressFrame;
-        private int interruptedFrame = -1, capturedPressFrame = -1;
+        private bool pressed, rejected, pending, clearForDrag, released, releaseRejected;
+        private Vector2 pressPosition, releasePosition, eventReleasePosition;
+        private int pressFrame, releaseFrame, pendingPressFrame, eventPressFrame;
+        private int interruptedFrame = -1;
+        private InputSettings inputSettings;
+        private bool previousEventMerging;
 
         private void OnEnable()
         {
-            InputSystem.onAfterUpdate += CapturePress;
+            if (!Application.isPlaying) return;
+            // Input System can merge a first press with later held-position events before
+            // onEvent. Preserve the sequence while this scene's selection input is active.
+            inputSettings = InputSystem.settings;
+            previousEventMerging = inputSettings.disableRedundantEventsMerging;
+            inputSettings.disableRedundantEventsMerging = true;
+            InputSystem.onEvent += CapturePointerEvent;
             if (placement) placement.GestureStarted += Interrupt;
             if (menu)
             {
@@ -32,7 +40,9 @@ namespace SurfaceForge
 
         private void OnDisable()
         {
-            InputSystem.onAfterUpdate -= CapturePress;
+            InputSystem.onEvent -= CapturePointerEvent;
+            if (inputSettings) inputSettings.disableRedundantEventsMerging = previousEventMerging;
+            inputSettings = null;
             if (placement) placement.GestureStarted -= Interrupt;
             if (menu)
             {
@@ -51,30 +61,51 @@ namespace SurfaceForge
         private void Interrupt()
         {
             interruptedFrame = Time.frameCount;
-            pressed = pending = false;
+            pressed = pending = clearForDrag = released = false;
             ClearSelection();
         }
 
         private bool InViewport(Vector2 p) => sceneCamera && sceneCamera.pixelRect.Contains(p) &&
             p.x >= 0 && p.y >= 0 && p.x < Screen.width && p.y < Screen.height;
 
-        private void CapturePress()
+        private void CapturePointerEvent(InputEventPtr inputEvent, InputDevice device)
         {
-            // Snapshot UI before UGUI can hide a clicked panel, including down/up in one frame.
-            if (InputState.currentUpdateType != InputUpdateType.Dynamic) return;
-            var mouse = Mouse.current;
-            if (mouse == null || !mouse.leftButton.wasPressedThisFrame || capturedPressFrame == Time.frameCount) return;
-            capturedPressFrame = pressFrame = Time.frameCount;
-            pressed = true;
-            pressPosition = mouse.position.ReadValue();
-            rejected = pressFrame <= interruptedFrame || !InViewport(pressPosition) || !placement ||
-                placement.IsOverUI(pressPosition) || placement.IsDragging;
+            if (InputState.currentUpdateType != InputUpdateType.Dynamic || device != Mouse.current ||
+                !(device is Mouse mouse) || (!inputEvent.IsA<StateEvent>() && !inputEvent.IsA<DeltaStateEvent>())) return;
+            // onEvent runs before device state changes: compare event button with prior state,
+            // and read the position from that event, never the end-of-update mouse position.
+            var position = mouse.position.ReadValueFromEvent(inputEvent, out var value) ? value : mouse.position.ReadValue();
+            var hasButton = mouse.leftButton.ReadValueFromEvent(inputEvent, out var button);
+            if (hasButton &&
+                button >= mouse.leftButton.pressPointOrDefault && !mouse.leftButton.isPressed)
+            {
+                pressFrame = Time.frameCount;
+                pressed = true;
+                pressPosition = position;
+                rejected = pressFrame <= interruptedFrame || !InViewport(position) || !placement ||
+                    placement.IsOverUI(position) || placement.IsDragging;
+            }
+            var threshold = EventSystem.current ? EventSystem.current.pixelDragThreshold : 5;
+            if (pressed && !rejected && (position - pressPosition).sqrMagnitude > threshold * threshold)
+            {
+                rejected = clearForDrag = true; // Latch even if later events return to the press point.
+            }
+            if (pressed && hasButton && button < mouse.leftButton.pressPointOrDefault && mouse.leftButton.isPressed)
+            {
+                released = true;
+                releaseRejected = rejected || !InViewport(position) || !placement ||
+                    placement.IsOverUI(position) || placement.IsDragging;
+                eventReleasePosition = position;
+                eventPressFrame = pressFrame;
+                pressed = false;
+            }
         }
 
         // Runs one frame after release: all UGUI Update and placement LateUpdate work from
         // the release frame has completed, regardless of component execution order.
         private void LateUpdate()
         {
+            if (clearForDrag) { clearForDrag = false; ClearSelection(); }
             if (Selected && !Selected.isActiveAndEnabled) ClearSelection();
             else if (!Selected) ClearSelection();
             if (!placement || !menu || !menu.isActiveAndEnabled || !sceneCamera)
@@ -96,15 +127,16 @@ namespace SurfaceForge
                 if (!rejected && moved) ClearSelection();
                 rejected |= !InViewport(position) || placement.IsOverUI(position) || placement.IsDragging ||
                     placement.LastConsumedFrame >= pressFrame || moved;
-                if (mouse.leftButton.wasReleasedThisFrame)
-                {
-                    pressed = false;
-                    pending = !rejected;
-                    releasePosition = position;
-                    releaseFrame = Time.frameCount;
-                    pendingPressFrame = pressFrame;
-                }
-                else if (!mouse.leftButton.isPressed) pressed = false;
+                if (!mouse.leftButton.isPressed) pressed = false;
+            }
+            if (released)
+            {
+                released = false;
+                pending = !releaseRejected;
+                releasePosition = eventReleasePosition;
+                pendingPressFrame = eventPressFrame;
+                // Stamp here, after UI Update, rather than relying on input-update frame numbering.
+                releaseFrame = Time.frameCount;
             }
         }
 
