@@ -20,6 +20,7 @@ namespace SurfaceForge.UI
 
         public void OnInitializePotentialDrag(PointerEventData e)
         {
+            if (e.button != PointerEventData.InputButton.Left) return;
             e.useDragThreshold = true;
             if (scroll) scroll.OnInitializePotentialDrag(e);
         }
@@ -42,13 +43,13 @@ namespace SurfaceForge.UI
         }
         public void OnDrag(PointerEventData e)
         {
-            if (e.pointerId != pointerId) return;
+            if (e.button != PointerEventData.InputButton.Left || e.pointerId != pointerId) return;
             if (scrolling && scroll) scroll.OnDrag(e);
             else if (placing && controller) controller.UpdatePreview(e.position);
         }
         public void OnEndDrag(PointerEventData e)
         {
-            if (e.pointerId != pointerId) return;
+            if (e.button != PointerEventData.InputButton.Left || e.pointerId != pointerId) return;
             if (scrolling && scroll) scroll.OnEndDrag(e);
             else if (placing && controller) controller.End(this, e.position);
             ResetGesture();

@@ -14,9 +14,9 @@ Environment: Unity 6000.3.25f1 Windows Editor, URP 17.3.0, Input System 1.20.0. 
 
 ### Automated tests
 
-The permanent fixture is listed under EditMode and explicitly enters Play Mode in a fresh isolated scene for runtime callbacks. It covers anchor/normal pose, surface invalidation at release, exactly-once commit and data/collider retention, preview/commit pose equivalence and shared preview material, UI becoming raycastable at release, repeated controller/source-disable and focus-loss cancellation, release coordinates outside the surface, and cleanup on a following frame without an EndDrag event. Final run: 7/7 passed, 0 failed or skipped (Unity Skills test job `6cac8105`).
+The permanent fixture is listed under EditMode and explicitly enters Play Mode in a fresh isolated scene for runtime callbacks. It covers anchor/normal pose, surface invalidation at release, exactly-once commit and data/collider retention, preview/commit pose equivalence and shared preview material, UI becoming raycastable at release, repeated controller/source-disable and focus-loss cancellation, release coordinates outside the surface, and cleanup on a following frame without an EndDrag event. Initial implementation run: 7/7 passed (job `6cac8105`). After the cloud-review fix and fixture improvements, the complete final run passed 8/8, 0 failed or skipped (job `7dbbc01f`). The added regression routes right-button drag/end events with the same pointer ID during a left-button drag and confirms they cannot move or commit it.
 
-Earlier test iterations exposed fixture issues: existing Main UI contaminated EditMode queries; EditMode did not exercise runtime disable callbacks; the test source lacked its controller binding; newly created/re-enabled UI had not received rendered depth for GraphicRaycaster. The fixture now isolates the scene, enters Play Mode, binds its source and waits for UI rendering. Earlier failures are not counted as passing runs.
+Earlier test iterations exposed fixture issues: existing Main UI contaminated EditMode queries; EditMode did not exercise runtime disable callbacks; the test source lacked its controller binding; newly created/re-enabled UI had not received rendered depth for GraphicRaycaster. The fixture now isolates the scene, enters Play Mode, binds its source and waits for UI rendering. A later full rerun exposed background PlayerLoop timing in the two asynchronous cases; the final fixture uses an isolated neutral Input System mouse, CanvasGroup UI blocking, temporary runInBackground (restored in teardown), and explicit Time.frameCount advancement with QueuePlayerLoopUpdate. The intermediate 6/8 results are superseded by the complete 8/8 run. Earlier failures are not counted as passing runs.
 
 ### Main-scene UGUI event simulation and Editor inspection
 
@@ -30,6 +30,10 @@ Earlier test iterations exposed fixture issues: existing Main UI contaminated Ed
 - Mouse click expanded the catalog in the 1280 x 720 Game View. A normal row click did not increase placed count.
 - Several desktop drag-injection attempts from the Cube row at 1280 x 720 and 2560 x 1080 did not produce a placed object. Temporary diagnostics observed no placement Begin call from those attempts; the same row/controller references worked through UGUI dispatch. The cause of the missing input event was not established. These attempts are **not passing drag tests**, and no claim is made that all four shapes were physically dragged successfully.
 - The available desktop API exposes an atomic drag, without a supported held-button/move/release sequence across tool calls. Escape during a held physical drag, switching focus mid-drag and leaving the window before releasing were not reliably exercised. Callback-based tests do not replace these input checks.
+
+## Cloud review
+
+The first cloud review completed for `41a3bb0` and raised one valid P2: right-button drag/end callbacks share the mouse pointer ID and could finish a left-button gesture. Added left-button filtering to initialize/drag/end and the regression above. Latest-head re-review is tracked in PR #4; pending review is not a pass.
 
 ## Self review and remaining acceptance
 
