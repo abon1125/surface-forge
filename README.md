@@ -1,6 +1,6 @@
 # SurfaceForge
 
-A Unity desktop terrain workspace with a finite terrain scene and a draggable prop catalog.
+A Unity desktop terrain workspace with a finite terrain scene, draggable prop catalog, and prop selection/deletion.
 
 - Unity 6000.3.25f1, URP 17.3.0, Input System 1.20.0.
 - Open `Assets/SurfaceForge/Scenes/Main.unity` and enter Play Mode.
@@ -15,7 +15,11 @@ The catalog displays four props with original icons and distinct URP materials. 
 - Release on the terrain to place one static prop. Release over any UI or outside the terrain to cancel. Escape, focus loss, leaving the Game View, or disabling the source/controller also cancel.
 - Original catalog rows remain available. Placed props retain their definition and model colliders. Overlap is allowed and placement is not saved between sessions.
 
-Selection, deletion and guide lines remain for later milestones. See the M3 validation record for the outstanding physical mouse acceptance checks.
+- Left-click a placed prop without dragging to select it. Click another visible prop to switch; click terrain or empty scene space to clear. UI clicks retain the scene target.
+- The nearby menu identifies the selected prop. **DELETE** removes only that instance. The menu follows the target and viewport, stays inside the canvas and left of the sidebar, and hides behind the camera or outside its viewport.
+- Starting a catalog drag (including vertical scrolling), losing focus, or disabling selection/menu clears selection. A placement release never doubles as a selection click; a fresh scene click is required.
+
+Guide lines remain for a later milestone. M3 physical input acceptance gaps are retained in the validation records.
 
 | Stable ID / name | Model size (metres) | Model collider |
 | --- | --- | --- |
@@ -24,7 +28,7 @@ Selection, deletion and guide lines remain for later milestones. See the M3 vali
 | `cylinder` / Cylinder | 1.5 diameter × 1.5 height | Convex MeshCollider |
 | `cone` / Cone | 1.5 diameter × 1.5 height | Convex MeshCollider |
 
-All prop roots use identity transforms and bottom-centre placement anchors. Their child `Model` is offset upward by 0.75 m. Colliders live on the model child; future selection should resolve the owning root from the hit child. Props use the Default layer, separate from the terrain's Surface layer, and have no Rigidbody.
+All prop roots use identity transforms and bottom-centre placement anchors. Their child `Model` is offset upward by 0.75 m. Selection resolves model child colliders to the owning `PlacedProp` root. Source prefabs use Default; the complete hierarchy of each placed instance uses the dedicated PlacedProp layer, separate from Surface. No Rigidbody is present.
 
 Assets under `Assets/SurfaceForge/`:
 
@@ -32,9 +36,9 @@ Assets under `Assets/SurfaceForge/`:
 - `Data/Props/`: matching `PropDefinition` assets, with ID, display name, icon and prefab references.
 - `UI/Prefabs/PropCatalogItem.prefab`: reusable icon/name row with a raycastable background.
 - `UI/Icons/` and `Materials/`: matching icons and materials; `Models/Cone.asset` contains the original closed 32-sided cone mesh.
-- `Scripts/`: catalog, drag gesture routing, placement lifecycle, explicit TerrainCollider query and placed-prop marker. Main assigns its camera, Surface mask, collider and two shared preview materials in Inspector. Runtime previews use Ignore Raycast with disabled colliders; placed props use Default, separate from Surface.
-- `Tests/Editor/`: placement regression tests. Run `SurfaceForge.Tests.PlacementTests` from the Test Runner's EditMode tab; the fixture enters Play Mode in an isolated scene to exercise runtime callbacks. Save your scene before running tests.
+- `Scripts/`: catalog, gesture routing, placement, TerrainCollider query, placed-prop marker, selection and UGUI context menu. Main explicitly assigns camera, masks, collider, shared preview materials and UI references. Previews use Ignore Raycast with disabled colliders. Selection queries PlacedProp within 500 m; neither query changes the other.
+- `Tests/Editor/`: placement and selection regression tests. Run `SurfaceForge.Tests` from the Test Runner's EditMode tab; fixtures enter Play Mode and wait for real PlayerLoop frames. Placement uses an isolated scene; selection integration opens Main. Save your scene before running tests. Input System test mice and UGUI invocation are distinct from desktop input.
 
 The models use Unity primitives and an original cone mesh; icons and material colors were authored for this project. No external artwork was added.
 
-See [M1 validation](Docs/M1Validation.md), [M2 validation](Docs/M2Validation.md) and [M3 validation](Docs/M3Validation.md) for performed checks and limitations. M3 awaits user manual acceptance; automated event dispatch and code review do not replace it. No desktop build or recording is included yet. Desktop executable and continuous native-window resize acceptance are deferred until the necessary features are complete.
+See [M1 validation](Docs/M1Validation.md), [M2 validation](Docs/M2Validation.md), [M3 validation](Docs/M3Validation.md) and [M4 validation](Docs/M4Validation.md) for performed checks and limitations. M3 and M4 await user manual acceptance; automation and code review do not replace it. No desktop build or recording is included yet. Desktop executable and continuous native-window resize acceptance are deferred until the necessary features are complete.

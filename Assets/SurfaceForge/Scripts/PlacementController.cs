@@ -16,10 +16,20 @@ namespace SurfaceForge
         private PropDefinition definition;
         private UI.PropItemDragHandler source;
         public bool IsDragging => preview != null;
+        public event System.Action GestureStarted;
+        public int LastConsumedFrame { get; private set; } = -1;
+
+        // Both scrolling and placement own their entire left-button gesture.
+        public void ConsumeGesture()
+        {
+            LastConsumedFrame = Time.frameCount;
+            GestureStarted?.Invoke();
+        }
 
         public bool Begin(UI.PropItemDragHandler owner, PropDefinition value, Vector2 position)
         {
             if (!isActiveAndEnabled || IsDragging || !value || !value.Prefab || !surfaceQuery) return false;
+            ConsumeGesture();
             source = owner;
             definition = value;
             preview = Instantiate(value.Prefab);
@@ -69,7 +79,7 @@ namespace SurfaceForge
             if (TryPose(releasePosition, out var pose))
             {
                 var placed = Instantiate(definition.Prefab, pose.position, pose.rotation);
-                foreach (var t in placed.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = 0;
+                foreach (var t in placed.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = LayerMask.NameToLayer("PlacedProp");
                 placed.AddComponent<PlacedProp>().Initialize(definition);
             }
             Cancel();
@@ -82,6 +92,7 @@ namespace SurfaceForge
 
         public void Cancel()
         {
+            if (IsDragging) LastConsumedFrame = Time.frameCount;
             if (preview)
             {
                 preview.SetActive(false);
