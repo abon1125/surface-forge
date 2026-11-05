@@ -45,6 +45,9 @@
 # Visual Studio cache directory
 .vs/
 
+# Visual Studio Code local settings
+/.vscode/
+
 # Gradle cache directory
 .gradle/
 
@@ -112,9 +115,6 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
-
-# Local interview requirements and development plan (not for public distribution)
-/Docs/DevelopmentPlan.md
 
 # Local agent skill copies; the Unity package is tracked in Packages instead
 /.agents/skills/unity-skills/
