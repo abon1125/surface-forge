@@ -28,6 +28,7 @@ namespace SurfaceForge.UI
         {
             if (e.button != PointerEventData.InputButton.Left || scrolling || placing) return;
             pointerId = e.pointerId;
+            if (controller) controller.ConsumeGesture();
             var delta = e.position - e.pressPosition;
             scrolling = Mathf.Abs(delta.y) > Mathf.Abs(delta.x);
             if (scrolling)
@@ -50,6 +51,7 @@ namespace SurfaceForge.UI
         public void OnEndDrag(PointerEventData e)
         {
             if (e.button != PointerEventData.InputButton.Left || e.pointerId != pointerId) return;
+            if ((scrolling || placing) && controller) controller.ConsumeGesture();
             if (scrolling && scroll) scroll.OnEndDrag(e);
             else if (placing && controller) controller.End(this, e.position);
             ResetGesture();
