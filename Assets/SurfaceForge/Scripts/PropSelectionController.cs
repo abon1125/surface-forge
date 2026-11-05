@@ -88,7 +88,7 @@ namespace SurfaceForge
             var threshold = EventSystem.current ? EventSystem.current.pixelDragThreshold : 5;
             if (pressed && !rejected && (position - pressPosition).sqrMagnitude > threshold * threshold)
             {
-                rejected = clearForDrag = true; // Latch even if later events return to the press point.
+                RejectSceneDrag(); // Latch even if later events return to the press point.
             }
             if (pressed && hasButton && button < mouse.leftButton.pressPointOrDefault && mouse.leftButton.isPressed)
             {
@@ -101,11 +101,19 @@ namespace SurfaceForge
             }
         }
 
+        private void RejectSceneDrag()
+        {
+            rejected = clearForDrag = true;
+            // A newer drag supersedes both a prior LateUpdate candidate and a prior
+            // release captured earlier in the same Dynamic input batch.
+            pending = released = false;
+        }
+
         // Runs one frame after release: all UGUI Update and placement LateUpdate work from
         // the release frame has completed, regardless of component execution order.
         private void LateUpdate()
         {
-            if (clearForDrag) { clearForDrag = false; ClearSelection(); }
+            if (clearForDrag) { clearForDrag = false; pending = false; ClearSelection(); }
             if (Selected && !Selected.isActiveAndEnabled) ClearSelection();
             else if (!Selected) ClearSelection();
             if (!placement || !menu || !menu.isActiveAndEnabled || !sceneCamera)
@@ -124,7 +132,7 @@ namespace SurfaceForge
             {
                 var threshold = EventSystem.current ? EventSystem.current.pixelDragThreshold : 5;
                 var moved = (position - pressPosition).sqrMagnitude > threshold * threshold;
-                if (!rejected && moved) ClearSelection();
+                if (!rejected && moved) { RejectSceneDrag(); ClearSelection(); clearForDrag = false; }
                 rejected |= !InViewport(position) || placement.IsOverUI(position) || placement.IsDragging ||
                     placement.LastConsumedFrame >= pressFrame || moved;
                 if (!mouse.leftButton.isPressed) pressed = false;
