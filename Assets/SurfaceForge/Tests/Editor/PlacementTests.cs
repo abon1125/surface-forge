@@ -5,6 +5,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
@@ -19,6 +21,20 @@ namespace SurfaceForge.Tests
         private PropDefinition definition;
         private PropItemDragHandler source;
         private Material validMaterial;
+        private Mouse testMouse;
+        private bool previousRunInBackground;
+
+        private static IEnumerator NextPlayerFrame()
+        {
+            var frame = Time.frameCount;
+            var deadline = EditorApplication.timeSinceStartup + 10;
+            while (Time.frameCount == frame)
+            {
+                Assert.That(EditorApplication.timeSinceStartup, Is.LessThan(deadline), "Player loop did not advance");
+                EditorApplication.QueuePlayerLoopUpdate();
+                yield return null;
+            }
+        }
 
         private Vector2 Centre => new Vector2(Screen.width / 2f, Screen.height / 2f);
         private int Count => Object.FindObjectsByType<PlacedProp>(FindObjectsSortMode.None).Length;
@@ -36,6 +52,8 @@ namespace SurfaceForge.Tests
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             yield return new EnterPlayMode();
+            previousRunInBackground = Application.runInBackground;
+            Application.runInBackground = true;
             host = new GameObject("test placement");
             cameraObject = new GameObject("test camera");
             var camera = cameraObject.AddComponent<Camera>();
@@ -63,6 +81,18 @@ namespace SurfaceForge.Tests
             source = sourceObject.GetComponent<PropItemDragHandler>();
             source.Initialize(controller, null);
             definition = AssetDatabase.LoadAssetAtPath<PropDefinition>("Assets/SurfaceForge/Data/Props/Cube.asset");
+            var icon = new GameObject("icon", typeof(RectTransform), typeof(Image));
+            var label = new GameObject("label", typeof(RectTransform), typeof(Text));
+            icon.transform.SetParent(sourceObject.transform, false);
+            label.transform.SetParent(sourceObject.transform, false);
+            var view = sourceObject.GetComponent<PropCatalogItemView>();
+            SetReference(view, "icon", icon.GetComponent<Image>());
+            SetReference(view, "label", label.GetComponent<Text>());
+            view.Bind(definition);
+            testMouse = InputSystem.AddDevice<Mouse>();
+            testMouse.MakeCurrent();
+            InputSystem.QueueStateEvent(testMouse, new MouseState { position = Centre });
+            InputSystem.Update();
             Physics.SyncTransforms();
         }
 
@@ -70,6 +100,8 @@ namespace SurfaceForge.Tests
         public IEnumerator LeaveRuntime()
         {
             if (controller) controller.Cancel();
+            if (testMouse != null) InputSystem.RemoveDevice(testMouse);
+            Application.runInBackground = previousRunInBackground;
             foreach (var placed in Object.FindObjectsByType<PlacedProp>(FindObjectsSortMode.None))
                 Object.Destroy(placed.gameObject);
             foreach (var go in new[] { host, cameraObject, terrainObject, uiObject, sourceObject })
@@ -127,7 +159,7 @@ namespace SurfaceForge.Tests
         [UnityTest]
         public IEnumerator UIAddedAtReleaseCancelsEvenAfterValidPreview()
         {
-            var canvas = new GameObject("blocking UI", typeof(Canvas), typeof(GraphicRaycaster));
+            var canvas = new GameObject("blocking UI", typeof(Canvas), typeof(GraphicRaycaster), typeof(CanvasGroup));
             canvas.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
             var panel = new GameObject("panel", typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(canvas.transform, false);
@@ -137,13 +169,14 @@ namespace SurfaceForge.Tests
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             Canvas.ForceUpdateCanvases();
             // GraphicRaycaster requires a rendered graphic depth.
-            yield return new WaitForEndOfFrame();
+            yield return NextPlayerFrame();
+            Canvas.ForceUpdateCanvases();
             try
             {
-                panel.GetComponent<Image>().raycastTarget = false;
+                canvas.GetComponent<CanvasGroup>().blocksRaycasts = false;
                 Assert.That(controller.IsOverUI(Centre), Is.False);
                 Assert.That(controller.Begin(source, definition, Centre), Is.True);
-                panel.GetComponent<Image>().raycastTarget = true;
+                canvas.GetComponent<CanvasGroup>().blocksRaycasts = true;
                 Assert.That(controller.IsOverUI(Centre), Is.True);
                 controller.End(source, Centre);
                 Assert.That(Count, Is.Zero);
@@ -170,6 +203,35 @@ namespace SurfaceForge.Tests
         }
 
         [Test]
+        public void OtherMouseButtonWithSamePointerCannotMoveOrCommitLeftDrag()
+        {
+            var left = new PointerEventData(EventSystem.current)
+            {
+                pointerId = -1, button = PointerEventData.InputButton.Left,
+                pressPosition = Centre + Vector2.right * 30, position = Centre
+            };
+            source.OnBeginDrag(left);
+            Assert.That(controller.IsDragging, Is.True);
+            var preview = GameObject.Find("Placement Preview");
+            var position = preview.transform.position;
+            var right = new PointerEventData(EventSystem.current)
+            {
+                pointerId = left.pointerId, button = PointerEventData.InputButton.Right,
+                pressPosition = left.pressPosition, position = new Vector2(-10, -10)
+            };
+            source.OnBeginDrag(right);
+            source.OnDrag(right);
+            Assert.That(preview.transform.position, Is.EqualTo(position));
+            right.position = Centre;
+            source.OnEndDrag(right);
+            Assert.That(controller.IsDragging, Is.True);
+            Assert.That(Count, Is.Zero);
+            source.OnEndDrag(left);
+            Assert.That(controller.IsDragging, Is.False);
+            Assert.That(Count, Is.EqualTo(1));
+        }
+
+        [Test]
         public void ReleaseCoordinatesOutsideSurfaceCancelAfterValidPreview()
         {
             Assert.That(controller.Begin(source, definition, Centre), Is.True);
@@ -183,8 +245,8 @@ namespace SurfaceForge.Tests
         {
             // No mouse button is held: LateUpdate must cancel even without an EndDrag event.
             Assert.That(controller.Begin(source, definition, Centre), Is.True);
-            yield return null;
-            yield return null;
+            yield return NextPlayerFrame();
+            yield return NextPlayerFrame();
             Assert.That(controller.IsDragging, Is.False);
             Assert.That(GameObject.Find("Placement Preview"), Is.Null);
             Assert.That(Count, Is.Zero);
