@@ -44,6 +44,7 @@
 
 # Visual Studio cache directory
 .vs/
+.vsconfig
 
 # Visual Studio Code local settings
 /.vscode/
