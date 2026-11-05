@@ -102,13 +102,16 @@ namespace SurfaceForge
         }
         private void SuspendInput()
         {
+            var events = uiInput.GetComponent<EventSystem>();
             sidebarGroup.interactable = sidebarGroup.blocksRaycasts = false;
             selection.enabled = false;
             foreach (var row in sidebar.GetComponentsInChildren<UI.PropItemDragHandler>(true)) row.CancelGesture();
+            // Background/gap drags belong to ScrollRect itself, not a row. Reset its
+            // dragging latch before the input module discards its pointer state.
+            catalogScroll.OnEndDrag(new PointerEventData(events) { button = PointerEventData.InputButton.Left });
             catalogScroll.StopMovement();
             placement.Cancel(); placement.enabled = false;
             uiInput.enabled = false; // Clears UGUI pointer/drag state, including a held old press.
-            var events = uiInput.GetComponent<EventSystem>();
             if (events) events.SetSelectedGameObject(null);
         }
         private void AnimateTo(float target)

@@ -4,6 +4,7 @@ using SurfaceForge.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.UI;
@@ -178,6 +179,35 @@ namespace SurfaceForge.Tests
                 Assert.That(selection.Selected,Is.SameAs(prop));
                 Field<Button>(menu,"deleteButton").onClick.Invoke(); yield return Frames();
                 Assert.That(Object.FindObjectsByType<PlacedProp>(FindObjectsSortMode.None),Is.Empty);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator DirectScrollRectBackgroundDragEndsOnModeSwitch()
+        {
+            var catalog = Object.FindFirstObjectByType<PropCatalogView>();
+            catalog.SetExpanded(true); yield return Frames();
+            var scroll = Field<ScrollRect>(mode,"catalogScroll");
+            var dragging = typeof(ScrollRect).GetField("m_Dragging",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(dragging,Is.Not.Null);
+            for (int i=0;i<5;i++)
+            {
+                var data = new PointerEventData(EventSystem.current)
+                {
+                    button=PointerEventData.InputButton.Left,
+                    position=RectTransformUtility.WorldToScreenPoint(null,scroll.viewport.position)
+                };
+                // Dispatch directly to the ScrollRect, as background/gap drags do;
+                // no PropItemDragHandler owns or ends this gesture.
+                ExecuteEvents.Execute(scroll.gameObject,data,ExecuteEvents.initializePotentialDrag);
+                ExecuteEvents.Execute(scroll.gameObject,data,ExecuteEvents.beginDragHandler);
+                Assert.That((bool)dragging.GetValue(scroll),Is.True);
+                Assert.That(mode.TryToggle(),Is.True);
+                Assert.That((bool)dragging.GetValue(scroll),Is.False,"Direct ScrollRect drag survived mode switch");
+                yield return Settled();
+                Assert.That(mode.TryToggle(),Is.True); yield return Settled();
+                Assert.That(scroll.isActiveAndEnabled && catalog.IsExpanded,Is.True);
             }
         }
 
