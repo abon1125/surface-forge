@@ -8,7 +8,6 @@ namespace SurfaceForge.UI
         [SerializeField] private Image icon;
         [SerializeField] private Text label;
 
-        // A future pointer handler can read the bound definition from this row.
         public PropDefinition Definition { get; private set; }
 
         public void Bind(PropDefinition definition)

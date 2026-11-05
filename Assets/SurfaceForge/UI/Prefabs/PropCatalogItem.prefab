@@ -167,6 +167,7 @@ GameObject:
   - component: {fileID: 6640438766069921514}
   - component: {fileID: 4375891863593728709}
   - component: {fileID: 5286826386157504689}
+  - component: {fileID: 2421995414483428070}
   m_Layer: 0
   m_Name: PropCatalogItem
   m_TagString: Untagged
@@ -267,3 +268,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceForge.UI.PropCatalogItemView
   icon: {fileID: 8851302902585267025}
   label: {fileID: 7072683087933666481}
+--- !u!114 &2421995414483428070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3842334957828738243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49e3015d66238784c88b188b05667da6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceForge.UI.PropItemDragHandler

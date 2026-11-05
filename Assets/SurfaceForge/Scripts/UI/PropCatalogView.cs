@@ -11,6 +11,8 @@ namespace SurfaceForge.UI
         [SerializeField] private RectTransform content;
         [SerializeField] private PropCatalogItemView itemPrefab;
         [SerializeField] private PropDefinition[] definitions;
+        [SerializeField] private PlacementController placementController;
+        [SerializeField] private ScrollRect scrollRect;
 
         public bool IsExpanded => listRoot.activeSelf;
 
@@ -18,7 +20,9 @@ namespace SurfaceForge.UI
         {
             foreach (var definition in definitions)
             {
-                Instantiate(itemPrefab, content).Bind(definition);
+                var item = Instantiate(itemPrefab, content);
+                item.Bind(definition);
+                item.GetComponent<PropItemDragHandler>().Initialize(placementController, scrollRect);
             }
             SetExpanded(false);
             toggleButton.onClick.AddListener(Toggle);

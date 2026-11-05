@@ -499,7 +499,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Choose a shape
+  m_Text: Drag left to place
 --- !u!222 &200681028
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -573,6 +573,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 48382a7ef08130b47815f64fb65fdd3c, type: 2}
   - {fileID: 11400000, guid: 542088d7182386e4cac78120decbf4d7, type: 2}
   - {fileID: 11400000, guid: 2ed9542d64fccbf4786fb2551a0fd492, type: 2}
+  placementController: {fileID: 1554793331}
+  scrollRect: {fileID: 691298771}
 --- !u!114 &201802151
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1226,6 +1228,73 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &1554793330
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1554793333}
+  - component: {fileID: 1554793332}
+  - component: {fileID: 1554793331}
+  m_Layer: 0
+  m_Name: Prop Placement
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1554793331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554793330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7af1a0c154cc58468a48449a0e68772, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceForge.PlacementController
+  surfaceQuery: {fileID: 1554793332}
+  validPreviewMaterial: {fileID: 2100000, guid: 6d49dc0fe52732a4d9564a9d79322c74, type: 2}
+  invalidPreviewMaterial: {fileID: 2100000, guid: 6fa1f6455301fa94c934685f86980738, type: 2}
+--- !u!114 &1554793332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554793330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16b021f73a0c35441ae8867710588b0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceForge.SurfacePlacementQuery
+  sceneCamera: {fileID: 2725459}
+  surface: {fileID: 1959418545}
+  surfaceMask:
+    serializedVersion: 2
+    m_Bits: 256
+  maxDistance: 500
+  invalidDepth: 50
+--- !u!4 &1554793333
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1554793330}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1745384415
 GameObject:
   m_ObjectHideFlags: 0
@@ -1495,3 +1564,4 @@ SceneRoots:
   - {fileID: 913943117}
   - {fileID: 825100913}
   - {fileID: 798594717}
+  - {fileID: 1554793333}
