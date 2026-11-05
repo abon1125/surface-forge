@@ -1,0 +1,43 @@
+# M5 validation
+
+Environment: Unity 6000.3.25f1 Windows Editor, URP 17.3.0, Input System 1.20.0. Baseline: merged M4 PR #5, `3ebc1b5`. No package upgrades or terrain changes.
+
+## Implemented
+
+V switches overview and a static desktop first-person simulation. Main explicitly binds ViewModeController to the existing camera, overview fitting, sidebar/canvas/group, placement, selection, UI input module, ScrollRect, prefab and spawn transform. SimulatedPlayer holds its own HeadAnchor reference; the prefab contains a capsule body and no external camera/listener reference. The authored spawn is an elevated lookout outside the near terrain edge, aimed across the workspace; it is static and does not claim grounded locomotion. No XR, movement, look controls, controller balls/rays or world-space catalog is included.
+
+The camera snapshot includes parent/local pose/scale, projection mode, FOV, orthographic size, clip planes and viewport. Overview fitting is suspended during simulation and the sidebar transition; return detaches/restores the camera before deactivating/destroying the player. Existing overview fitting resumes with current Screen/canvas dimensions after the sidebar is back. No scene reload occurs.
+
+Sidebar animation uses unscaled time and current canvas geometry. Its CanvasGroup stops interactions/raycasts at transition start. Existing catalog rows/expansion are retained. Transitions ignore reentry. Placement/selection and UGUI input are disabled, row gestures and scrolling end, previews/menu/deferred clicks clear, and Input System event-merging state follows the existing selection lifecycle. Overview input resumes after mouse buttons are neutral.
+
+## Verification
+
+First complete run: 20/21 passed, 0 skipped (job `6b102095`, 357 s). All eight M3 tests and the first three M5 tests passed; M4 InvalidTargetsFocusAndListenerLifetimeCleanUp failed to select its expected Cylinder. Desktop focus was changed during this run; the cause is unconfirmed. This run is not a complete pass. Second complete run: 21/22 passed (job `773f19ba`, 450 s), including all 18 existing M3/M4 tests. The disabled-held-input fixture failed. A focused run also passed 3/4 (`0788b9ee`, 142 s); diagnostics showed the fixture was reading a neutral Editor input buffer rather than a held Dynamic input state. It now schedules the switch/disable inside actual Dynamic onAfterUpdate and asserts that a held test-device press exists there. The runtime neutral-button subscription is paired with restoration/destruction so it can finish while the component is disabled. Corrected focused suite: **5/5 passed**, 0 failed/skipped (`0469b436`, 235 s). It includes 50 round trips, reentry rejection, prop pose/definition/collider and catalog retention, V test-device switching/held gesture cancellation, both transition interruptions, disabled-controller held-release completion, and four-shape placement/selection/cancellation/deletion after selected-mode switches. Waits require real Time.frameCount advancement; no forced InputSystem.Update is used. The first full run after tool removal passed 22/23 (`9ee3a14b`, 669 s): all five M5 tests passed; M4 PlacementReleaseIsSuppressedAndFreshClickWorks failed its initial Cone selection before any mode switch. This is not a complete pass. Selection fixture isolation was strengthened without weakening assertions: other enabled mice are disabled only for Input System input (keepSendingEvents=true) and restored, and intended mouse batches are queued in onBeforeUpdate for Dynamic input so Editor updates cannot consume them first. Teardown removes the callback, clears its queue and restores the previous current mouse. **Final isolated full suite: 23/23 passed, 0 failed/skipped** (`6f8f29dd`, 823 s), including all eight M3 tests, all ten M4 tests and all five M5 tests. This run occurred after temporary-tool removal; latest fixture compilation succeeded (`39e19b6e`).
+
+### Actual Game View / visual and geometry checks
+
+In one Main Play session inspected 1280x720, 1920x1080, 1024x768, 2560x1080 and 640x480. Simulation used one player, one enabled camera/listener, perspective, HeadAnchor parenting and full viewport at every size. Sidebar left edges were respectively 1281.33, 1922, 1025.23, 2562.31 and 640.77 pixels: fully outside the canvas. Right-edge UGUI raycasts returned zero hits, placement/selection were disabled and four rows remained. On return players were zero, input/interaction were restored, sidebar right edge equalled Screen.width, and overview viewport reserved the current sidebar width. All checked states had no preview/selection. Resized while simulating and requested 1280x720 100 ms after starting a return transition from 640x480; settled overview and UI were correct.
+
+Visually inspected both modes at all five sizes (desktop captures for 1280x720; composited Game View captures for the remaining sizes). Terrain is visible from the safe head position and sidebar returns with the expanded list. These are Editor API/geometry/visual checks, not physical keyboard acceptance. Screenshots and temporary prefixed Unity Skills author/probe tools were removed before delivery. The prefab references the existing URP package Lit material; no new third-party artwork or package is introduced.
+
+### Actual desktop input
+
+Actual desktop mouse expanded the list at 1280x720. Repeated desktop V/v injection attempts, including after clicking the Game View workspace and while in an API-entered simulation, did not change mode. The cause was not established; these are **not passing keyboard tests**. The successfully observed visual switches used the controller API, and the permanent V test uses an Input System test keyboard. Physical V switching remains a user acceptance check; neither test-device nor API success substitutes for it. One window activation timed out and recovered on reselection; no keyboard-delivery cause is inferred from that.
+
+During the final visual session Console history contained only seven earlier entries: five from M1/M2/M4 and the two corrected M5 protected-API compile diagnostics at 13:41 UTC. No later runtime errors appeared. Current compilation is checked separately from this history.
+
+## Self review and cloud review
+
+Reviewed explicit references, identity prefab root/head/body geometry and package material reference, camera restoration before player destruction, resize-aware canvas coordinates, transition ownership, row/ScrollRect cancellation, UI module pointer reset, input setting/subscription cleanup and prop retention. No TerrainData, package, camera fitting algorithm or binary line-ending change. Existing planning edits in AGENT.md/README are included; the ignored development plan, local settings and legacy stash are excluded. Head-specific cloud review results are tracked in the M5 PR discussion and description. Pending, failed or unavailable review is not a pass; user acceptance remains separate.
+
+## Limits and manual acceptance
+
+User acceptance is pending. Test-device input, UGUI dispatch and visual inspection do not count as desktop input. M3 gaps remain open: actual dragging of all four shapes with continuous preview at high/low/slope/inside-edge positions, held-button Esc/focus interruption, leaving the window/releasing/returning, and physical scrolling. M9 retains desktop builds and continuous native-window resize acceptance; M6–M10 are not marked complete.
+
+1. Open Main and enter Play Mode. Overview/sidebar start normally; expand PROPS and place a few props.
+2. Press V: one simulated player appears, the camera becomes perspective at its head, the sidebar smoothly leaves the right edge, and hidden UI cannot intercept input.
+3. Press V: overview and sidebar return with the same expanded/collapsed state; props retain positions, rotations, definitions and colliders. Fresh placement/cancellation/selection/deletion work for all four shapes.
+4. Switch during dragging/selection, press V repeatedly during animation, and interrupt with focus loss or disable/re-enable. No stale preview/menu, unexpected commit or duplicate player/camera/listener may remain. Repeat at least 50 round trips.
+5. Check 1280x720, 1920x1080, 1024x768, 2560x1080 and 640x480. Resize Game View while simulating or transitioning, then return: sidebar is correctly docked and overview refits current dimensions.
+
+No automatic PR merge. Final handoff follows latest-head cloud review.

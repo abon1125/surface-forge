@@ -17,6 +17,10 @@ namespace SurfaceForge.Tests
     public class SelectionTests
     {
         private Mouse mouse;
+        private Mouse previousMouse;
+        private Mouse[] otherMice;
+        private readonly System.Collections.Generic.Queue<MouseState> queuedStates =
+            new System.Collections.Generic.Queue<MouseState>();
         private bool oldBackground;
         private PropSelectionController selection;
         private PropContextMenuView menu;
@@ -44,7 +48,14 @@ namespace SurfaceForge.Tests
         }
         private void State(Vector2 position, bool down)
         {
-            InputSystem.QueueStateEvent(mouse, new MouseState { position = position }.WithButton(MouseButton.Left, down));
+            queuedStates.Enqueue(new MouseState { position = position }.WithButton(MouseButton.Left, down));
+        }
+        private void QueueDynamicStates()
+        {
+            // EditMode runner ticks can precede an Editor input update. Deliver the
+            // entire intended batch only at the next real player Dynamic update.
+            if (InputState.currentUpdateType != InputUpdateType.Dynamic) return;
+            while (queuedStates.Count > 0) InputSystem.QueueStateEvent(mouse, queuedStates.Dequeue());
         }
         private IEnumerator Click(Vector2 position)
         {
@@ -74,7 +85,14 @@ namespace SurfaceForge.Tests
             placement = Object.FindFirstObjectByType<PlacementController>();
             menu = Object.FindFirstObjectByType<PropContextMenuView>();
             camera = Field<Camera>(selection, "sceneCamera");
+            // Native motion must not replace Mouse.current during a test-device gesture.
+            // Keep OS/Editor events flowing; only exclude these devices from player input.
+            previousMouse = Mouse.current;
+            otherMice = InputSystem.devices.OfType<Mouse>().Where(d => d.enabled).ToArray();
+            foreach (var device in otherMice) InputSystem.DisableDevice(device, keepSendingEvents: true);
             mouse = InputSystem.AddDevice<Mouse>(); mouse.MakeCurrent();
+            queuedStates.Clear();
+            InputSystem.onBeforeUpdate += QueueDynamicStates;
             State(Vector2.zero, false);
             yield return Frames();
             point = camera.pixelRect.center;
@@ -82,7 +100,12 @@ namespace SurfaceForge.Tests
         [UnityTearDown]
         public IEnumerator Teardown()
         {
+            InputSystem.onBeforeUpdate -= QueueDynamicStates;
+            queuedStates.Clear();
             if (mouse != null) InputSystem.RemoveDevice(mouse);
+            if (otherMice != null)
+                foreach (var device in otherMice) if (device.added) InputSystem.EnableDevice(device);
+            if (previousMouse != null && previousMouse.added) previousMouse.MakeCurrent();
             Application.runInBackground = oldBackground;
             yield return new ExitPlayMode();
         }

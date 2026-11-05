@@ -577,6 +577,7 @@ GameObject:
   - component: {fileID: 201802152}
   - component: {fileID: 201802151}
   - component: {fileID: 201802150}
+  - component: {fileID: 201802153}
   m_Layer: 0
   m_Name: Sidebar
   m_TagString: Untagged
@@ -670,6 +671,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 201802148}
   m_CullTransparentMesh: 1
+--- !u!225 &201802153
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 201802148}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &302807473
 GameObject:
   m_ObjectHideFlags: 0
@@ -791,6 +804,37 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -25}
   m_SizeDelta: {x: 208, y: 48}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &304115365
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 304115366}
+  m_Layer: 0
+  m_Name: Simulation Spawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &304115366
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 304115365}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.06975647, y: 0, z: 0, w: 0.9975641}
+  m_LocalPosition: {x: 0, y: 12, z: -38}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &329448083
 GameObject:
   m_ObjectHideFlags: 0
@@ -1616,6 +1660,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1349759327
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1349759329}
+  - component: {fileID: 1349759328}
+  m_Layer: 0
+  m_Name: View Mode
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1349759328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349759327}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a564c5b66d4fdd4e965c8e1e0ebadf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SurfaceForge::SurfaceForge.ViewModeController
+  sceneCamera: {fileID: 2725459}
+  overview: {fileID: 2725456}
+  playerPrefab: {fileID: 2929816842822884593, guid: ad57483fc21242146a455d4657100b8a, type: 3}
+  spawnPoint: {fileID: 304115366}
+  sidebar: {fileID: 201802149}
+  canvas: {fileID: 825100913}
+  sidebarGroup: {fileID: 201802153}
+  placement: {fileID: 1554793331}
+  selection: {fileID: 1039917095}
+  uiInput: {fileID: 798594715}
+  catalogScroll: {fileID: 691298771}
+  transitionSeconds: 0.25
+  simulatedFieldOfView: 65
+--- !u!4 &1349759329
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1349759327}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1554793330
 GameObject:
   m_ObjectHideFlags: 0
@@ -2031,3 +2132,5 @@ SceneRoots:
   - {fileID: 798594717}
   - {fileID: 1554793333}
   - {fileID: 1039917096}
+  - {fileID: 304115366}
+  - {fileID: 1349759329}

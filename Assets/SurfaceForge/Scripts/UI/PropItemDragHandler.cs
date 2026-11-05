@@ -58,12 +58,13 @@ namespace SurfaceForge.UI
         }
         private void ResetGesture() { scrolling = placing = false; scrollEvent = null; }
         public void PlacementCancelled() => ResetGesture();
-        private void OnDisable()
+        public void CancelGesture()
         {
             if (scrolling && scroll && scrollEvent != null) scroll.OnEndDrag(scrollEvent);
             if (controller) controller.Cancel(this);
             ResetGesture();
         }
+        private void OnDisable() => CancelGesture();
         private void OnApplicationFocus(bool focused) { if (!focused) OnDisable(); }
         private void OnApplicationPause(bool paused) { if (paused) OnDisable(); }
     }
