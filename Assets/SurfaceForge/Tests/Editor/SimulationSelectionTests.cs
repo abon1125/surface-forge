@@ -243,7 +243,7 @@ namespace SurfaceForge.Tests
             prop.transform.position=original;yield return Frames();yield return MouseAt(deletePoint);
             Assert.That(prop.gameObject.activeSelf,Is.True,"重新可見後不能沿用舊按下刪除");
             var colliders=prop.GetComponentsInChildren<Collider>();foreach(var c in colliders)c.enabled=false;
-            foreach(var position in new[]{camera.transform.position-camera.transform.forward*3,camera.transform.position+camera.transform.forward*.2f,camera.transform.position+camera.transform.forward*20,camera.transform.position+camera.transform.right*10})
+            foreach(var position in new[]{camera.transform.position-camera.transform.forward*3,camera.transform.position+camera.transform.forward*20})
             {prop.transform.position=position;yield return Frames();Assert.That(context.IsVisible,Is.False);}
             prop.transform.position=original;foreach(var c in colliders)c.enabled=true;Physics.SyncTransforms();yield return Frames();Assert.That(context.IsVisible,Is.True,"selected="+selection.Selected+" target="+context.Target+" camera="+camera.transform.position);
             prop.enabled=false;yield return Frames();Assert.That(selection.Selected,Is.Null);Assert.That(context.Target,Is.Null);prop.enabled=true;
@@ -283,6 +283,48 @@ namespace SurfaceForge.Tests
             while(!load.isDone)yield return null;yield return Frames();
             Assert.That(Object.FindFirstObjectByType<SimulationSelectionController>().Selected,Is.Null);
             Assert.That(Object.FindFirstObjectByType<SimulationContextMenuView>().Target,Is.Null);
+        }
+        [UnityTest] public IEnumerator NearAndEdgeMenusStayInsideThreeAspectRatios()
+        {
+            var prop=Spawn(0);var camera=raycaster.ViewCamera;
+            // 配置測試使用 trigger，避免近距離樣本推動角色；遮擋由既有案例獨立驗證。
+            foreach(var collider in prop.GetComponentsInChildren<Collider>())collider.isTrigger=true;
+            var canvas=Field<Canvas>(context,"canvas");var corners=new Vector3[4];
+            float originalAspect=camera.aspect;
+            foreach(var ratio in new[]{16f/9,4f/3,1720f/720})
+            {
+                camera.aspect=ratio;
+                foreach(float depth in new[]{.15f,.5f,1.2f,3f})
+                foreach(var offset in new[]{Vector2.zero,new Vector2(-6,0),new Vector2(6,0),new Vector2(0,5),new Vector2(0,-5)})
+                {
+                    prop.transform.position=camera.transform.position+camera.transform.forward*depth+camera.transform.right*offset.x+camera.transform.up*offset.y-Vector3.up*.75f;
+                    Physics.SyncTransforms();selection.Select(prop);Canvas.ForceUpdateCanvases();
+                    Assert.That(context.IsVisible,Is.True,"ratio="+ratio+" depth="+depth+" offset="+offset);
+                    ((RectTransform)canvas.transform).GetWorldCorners(corners);
+                    foreach(var corner in corners)
+                    {
+                        var point=camera.WorldToViewportPoint(corner);
+                        Assert.That(point.z,Is.GreaterThan(camera.nearClipPlane));
+                        Assert.That(point.x,Is.InRange(.039f,.961f));Assert.That(point.y,Is.InRange(.039f,.961f));
+                    }
+                }
+                // 正式世界 Ray 必須仍可命中新位置的 DELETE。
+                var button=Field<Button>(context,"deleteButton");
+                prop.transform.position=camera.transform.position+camera.transform.forward*1.2f-Vector3.up*.75f;
+                Physics.SyncTransforms();selection.Select(prop);Canvas.ForceUpdateCanvases();yield return Frames();
+                var ray=new Ray(raycaster.RayOrigin.position,(button.transform.position-raycaster.RayOrigin.position).normalized);
+                Assert.That(raycaster.Query(ray).UI,Is.EqualTo(button.gameObject));
+                // 離屏構圖：目標位於視野右側外，世界選單仍在右側可視範圍。
+                prop.transform.position=camera.transform.position+camera.transform.forward*3+camera.transform.right*6-Vector3.up*.75f;
+                Physics.SyncTransforms();selection.Select(prop);Canvas.ForceUpdateCanvases();
+                int width=ratio==4f/3?1024:ratio==16f/9?1280:1720;int height=width==1024?768:720;
+                var rt=new RenderTexture(width,height,24);var previous=RenderTexture.active;camera.targetTexture=rt;
+                camera.Render();RenderTexture.active=rt;
+                var texture=new Texture2D(width,height,TextureFormat.RGB24,false);texture.ReadPixels(new Rect(0,0,width,height),0,0);texture.Apply();
+                System.IO.Directory.CreateDirectory("Temp/S5EdgeEvidence");System.IO.File.WriteAllBytes("Temp/S5EdgeEvidence/edge-"+width+".png",texture.EncodeToPNG());
+                camera.targetTexture=null;RenderTexture.active=previous;rt.Release();Object.Destroy(rt);Object.Destroy(texture);
+            }
+            camera.aspect=originalAspect;
         }
     }
 }

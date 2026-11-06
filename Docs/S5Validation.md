@@ -2,6 +2,8 @@
 
 日期：2026-11-06–07（Asia/Taipei）。Unity 6000.3.25f1／Windows Editor，沿用 URP、Input System、UGUI 與 DOTween 1.3.045，未新增 XR 或升級套件。
 
+> 2026-11-07 顯示調整：使用者要求近距離／視野邊緣不要自動隱藏。下列初次交付內容以 d3147cd 為歷史基準，其隱藏規則由文件末段的顯示調整取代；歷史測試與 SHA／job 保留。
+
 ## 起始狀態與範圍
 
 - 已讀取 AGENT.md、DevelopmentPlan、VRSimulationDevelopment、S0–S4Validation、M4Validation、README、舊 TaskCheckpoint 及 Unity Skills 協定與 Script／Scene／Test 模組。
@@ -81,3 +83,14 @@ Input System Mouse／Keyboard 為測試裝置；S5／S4 測試暫時停用其他
 - 只完成 S5，尚待使用者確認選取精準度、世界選單可讀性、舒適度、原生焦點及連續縮放。沒有 Windows 建置、XR、I1／I2、推送、PR 或合併。
 
 最後 staged 檢查後移除兩份 C#／測試的 EOF 多餘空行；編譯 2c131e7e completed、errorCount=0（2026-11-06T16:40:33.4609308Z）。該格式清理後未重跑互動測試；63 個保護檔案雜湊再次全部相同，meta／LFS／staged diff 及空白檢查通過（Unity 場景序列化的空值行尾空白保留）。
+
+
+## 近距離／視野邊緣持續顯示（2026-11-07）
+
+依使用者回饋修改 SimulationContextMenuView，近距離與畫面邊緣不再因完整面板超出視野而 SetActive(false)。保留物件側邊／前方的優先位置，再在指定 Camera 的投影中，將世界 Canvas 放在至少 1 m 深度、四周各 4% 內距的可視範圍；必要時等比例縮小。面板平面與 Camera 平行，以可驗證的投影尺寸保留完整名稱與 DELETE。
+
+仍然是 World Space Canvas，操作繼續由真正右球射線與所有場景／UI 比較距離，沒有改成螢幕 UI 或穿透置頂。前方但超出畫面的目標，其選單停靠對應邊緣。目標在攝影機後方、超過 15 m、失效或既有中斷時仍隱藏／清理。道具／地形／左手 UI 的物理遮擋仍有效；物件佔滿視野或選單被其他實體遮住時，不承諾強制可見／可點。
+
+本次只修改 VR 選單定位、相關 S5 測試及目前說明，沒有更改輸入、共用選取／刪除核心、桌面場景、共享資產、S1–S4 參數、場景／建置設定或 I1／I2。編譯 e614e0ad completed、errorCount=0。S5 重驗 **9549df48 completed，6/6 通過，零失敗／略過**（246 秒）；新增三比例 × 四距離（0.15／0.5／1.2／3 m）× 五位置的完整四角檢查，以及調整後正式世界 Ray 命中 DELETE；近距離測試道具暫時設為 trigger 以避免推動角色，遮擋保留由原有正式實體案例驗證。離屏 PNG 是 Camera.Render，不能視為原生比例／連續縮放或人工驗收。
+
+實際檢視三張邊緣離屏 PNG，選單完整在畫面內、名稱及 DELETE 可讀。60 組四角檢查與三比例世界 Ray 命中均通過，原有切換／清除／刪除、遮擋及生命週期五項也一併重跑。63 個保護檔案雜湊相同，沒有新增或修改場景／meta／LFS 資產。此次未重跑桌面測試、完整 38 項或原生焦點／連續縮放；先前證據維持歷史，不能視為此次重跑。

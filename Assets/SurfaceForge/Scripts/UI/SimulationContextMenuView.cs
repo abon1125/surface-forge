@@ -20,7 +20,6 @@ namespace SurfaceForge.UI
         public bool IsVisible => canvas && canvas.gameObject.activeInHierarchy;
         public event System.Action DeleteRequested;
         public event System.Action Unavailable;
-        private readonly Vector3[] corners = new Vector3[4];
         private void OnEnable() { if (deleteButton) deleteButton.onClick.AddListener(RequestDelete); Hide(); }
         private void OnDisable()
         {
@@ -52,9 +51,7 @@ namespace SurfaceForge.UI
             var anchor = bounds.center;
             var screen = viewCamera.WorldToViewportPoint(anchor);
             float distance = Vector3.Distance(viewCamera.transform.position, anchor);
-            if (screen.z <= viewCamera.nearClipPlane || screen.z >= viewCamera.farClipPlane ||
-                screen.x < 0 || screen.x > 1 || screen.y < 0 || screen.y > 1 ||
-                distance < readableDistance.x || distance > readableDistance.y)
+            if (screen.z <= 0 || distance > readableDistance.y)
             { canvas.gameObject.SetActive(false); return; }
             var rect = (RectTransform)canvas.transform;
             rect.sizeDelta = size;
@@ -68,14 +65,26 @@ namespace SurfaceForge.UI
             float frontExtent = Vector3.Dot(new Vector3(Mathf.Abs(towardViewer.x), Mathf.Abs(towardViewer.y), Mathf.Abs(towardViewer.z)), bounds.extents);
             // 選單位於物件側邊並前移至包圍盒前方，右球低於眼睛時也不被所選道具擋住。
             rect.position = anchor + viewer.right * side * (sideExtent + gap + halfWidth) + towardViewer * (frontExtent + gap);
-            rect.rotation = Quaternion.LookRotation(rect.position - viewer.position, viewer.up);
-            rect.GetWorldCorners(corners);
-            foreach (var corner in corners)
-            {
-                var p = viewCamera.WorldToViewportPoint(corner);
-                if (p.z <= viewCamera.nearClipPlane || p.x < 0 || p.x > 1 || p.y < 0 || p.y > 1)
-                { canvas.gameObject.SetActive(false); return; }
-            }
+            // 保持世界空間平面，依攝影機投影把完整選單移回可視區域。
+            // 近距離使用至少 1 m 的深度，避免裁切與過度放大；仍由世界射線判定遮擋。
+            var local = viewer.InverseTransformPoint(rect.position);
+            float depth = Mathf.Clamp(local.z, Mathf.Max(1, readableDistance.x, viewCamera.nearClipPlane + .1f), viewCamera.farClipPlane - .1f);
+            var left = viewCamera.ViewportToWorldPoint(new Vector3(0, .5f, depth));
+            var right = viewCamera.ViewportToWorldPoint(new Vector3(1, .5f, depth));
+            var bottom = viewCamera.ViewportToWorldPoint(new Vector3(.5f, 0, depth));
+            var top = viewCamera.ViewportToWorldPoint(new Vector3(.5f, 1, depth));
+            float width = Vector3.Distance(left, right), height = Vector3.Distance(bottom, top);
+            const float padding = .04f;
+            float fit = Mathf.Min(1, width * (1 - padding * 2) / (size.x * pixelScale), height * (1 - padding * 2) / (size.y * pixelScale));
+            pixelScale *= fit;
+            rect.localScale = Vector3.one * pixelScale;
+            rect.rotation = viewer.rotation;
+            var point = viewCamera.WorldToViewportPoint(viewer.TransformPoint(new Vector3(local.x, local.y, depth)));
+            float halfX = size.x * pixelScale / width * .5f;
+            float halfY = size.y * pixelScale / height * .5f;
+            point.x = Mathf.Clamp(point.x, padding + halfX, 1 - padding - halfX);
+            point.y = Mathf.Clamp(point.y, padding + halfY, 1 - padding - halfY);
+            rect.position = viewCamera.ViewportToWorldPoint(new Vector3(point.x, point.y, depth));
             canvas.gameObject.SetActive(true);
         }
     }
