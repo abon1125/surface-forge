@@ -1,1 +1,1 @@
-{"name":"SurfaceForge.Tests","references":["SurfaceForge","Unity.ugui","Unity.InputSystem"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"]}
+{"name":"SurfaceForge.Tests","references":["SurfaceForge","Unity.ugui","Unity.InputSystem"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"],"overrideReferences":true,"precompiledReferences":["nunit.framework.dll","DOTween.dll"]}

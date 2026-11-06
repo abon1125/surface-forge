@@ -2680,7 +2680,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1851227521}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
@@ -2810,6 +2810,11 @@ MonoBehaviour:
   panelSize: {x: 380, y: 380}
   metresPerPixel: 0.001
   facingOffset: {x: 0, y: 0, z: 0}
+  openDuration: 0.25
+  closeDuration: 0.18
+  collapsedScale: 0.15
+  openEase: 9
+  closeEase: 8
 --- !u!1 &1981537353
 GameObject:
   m_ObjectHideFlags: 0

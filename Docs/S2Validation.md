@@ -40,3 +40,20 @@
 - 三比例為離屏 Camera.Render，沒有變更原生 Game View 比例，沒有驗證執行中原生視窗連續縮放。俯仰與轉向的相對姿態由數值測試驗證，沒有逐角度人工截圖判讀。
 - 使用者尚未驗收 S2 面板可讀性、構圖、觀看與操作舒適度。請實際開啟 VRSimulation，確認 Tab／Esc、移動與右鍵俯仰時的閱讀、按住 Tab、焦點往返及停用／重啟。S1 既有使用者確認不延伸為 S2 通過。
 - 不含 S3–S5 射線、RayOrigin、UI 路由、拖曳、預覽、指引、選取刪除或場景選單；沒有 Windows 建置、XR 或桌面互動完整回歸。未推送、建立 PR 或合併。
+
+## DOTween 開合動畫補記（2026-11-06）
+
+基準為初次 S2 提交 `954d0fd68fa085a27c355ec0a719ecffb3598cd4`。使用者選擇「從左球展開」、自行導入 DOTween 後授權實行。本節追加實際動畫開發結果，不將上節或 S0／S1 歷史檢查改寫為本次重跑。
+
+- 使用者導入 DOTween 免費版 1.3.045、Modules 及 DOTweenSettings；保留完整原始套件、readme、著作權與 meta，依 [官方授權](https://dotween.demigiant.com/license.php)使用，不修改第三方來源。Unity、URP、Input System 與 UGUI 版本未變，沒有 XR 或 Pro。
+- 正式元件以一個 progress Tween 驅動位移、縮放與透明度，LateUpdate 保留錨點跟隨並套用動畫狀態。預設開啟 0.25 秒 OutCubic、收回 0.18 秒 InCubic、起始比例 15%，Inspector 可調。最終位置、尺寸及 S1 參數不變。IsExpanded 改為目標狀態；收回完成才隱藏 Canvas，快速 Tab 從目前進度反向，Esc 也收回。
+- 失焦／應用程式暫停時終止 Tween 並立即對齊目標狀態；元件停用／重啟立即收合、銷毀時清理。動畫使用 unscaled time、SetTarget(this) 及 SetLink(MenuAnchor)，不變更游標、不清除其他系統 Tween。DOTween 自身會有套件持久 driver；專案沒有另加 DontDestroyOnLoad、跨場景單例或全域 KillAll。
+- 編譯：暫停前 `db70097d`、`697b7425` 成功；續作追加直接使用 Tween 的測試時 `8ff3034c`／`04c4c042` 出現缺少 DG 組件參照。已在既有測試 asmdef 明確參照 DOTween.dll 與 NUnit，`392cf95b` completed、errorCount=0。移除暫時工具後最後編譯 succeeded=true、errorCount=0（2026-11-06T08:12:21.2597286Z）。保留上述診斷，不宣稱全程 Console 零錯誤。
+- 測試工具：`71cde627`（暫停前）及 `7de743d4`（續作）因 batch_state.json 分享衝突而 failed、totalTests=0，不能算通過。續作首輪 `467487ca` 3/3 通過（41 秒）；最終 `60b00ba4` 4/4 通過（75 秒），failed／skipped／inconclusive 均 0。
+- 最終測試涵蓋原 Tab 邊緣、按住／反覆切換、Esc、資料與項目數量、回呼焦點、元件停用／重啟、場景重載、右鍵與游標；新增以 Tween.Pause／Goto 控制中間時間，確認反向不跳進度、終點透明度及位置、關閉後停用且 Tween 參照清空。另在移動、水平轉向與俯仰時檢查動畫中位置／縮放／透明度，實際卸載 VR 場景證明自有 Tween 停止、其他 Tween 仍有效，游標恢復。
+- 動畫導入後 S1 回歸：`856cf0a1` 首輪因相同工具分享衝突 failed、totalTests=0；確認 Editor 停止後重試 `b4ad344f`，SimulationPlayerTests 2/2 通過（58 秒），沒有略過。此為本次動畫版本的移動、觀看及游標回歸，不沿用初次 S2 的 ab7d1835。
+- 場景設定由暫時 Editor API 工具儲存並重新開啟讀回：openDuration=0.25、closeDuration=0.18、collapsedScale=0.15、openEase=9（OutCubic）、closeEase=8（InCubic），初始 CanvasGroup.alpha=0。工具與 meta 已用 AssetDatabase 移除，未手改 YAML。
+- 最終獨立 Play Mode 觀察 `677731f0` completed，5 秒、healthy=true、errorCount=0，已退出。DOTween 診斷確認免費版安裝、Pro 未安裝、設定資產可解析及 7 個模組可見。新增依賴沒有缺少 meta；7 個二進位 LFS 指標與磁碟 SHA-256 相符，既有 TerrainData LFS 規則未變。
+- 影像：獨立 Play Mode `b38467ec`，以 DOTween.Goto 控制開啟 0／40／80／120／180／250 ms、收回 0／40／80／120／180 ms，使用 Camera.Render 離屏擷取；實際檢視代表性中間階段及完成畫面，面板從左球附近移出、放大並淡入，收回反向，最終構圖與原 S2 相同。另檢視 1280×720、1024×768、1720×720 最終影像，四項及提示完整、中央視野保留。產物位於忽略版控的 Temp/S2AnimationEvidence，不是原生 Game View 比例、連續縮放或動畫實況錄影。
+- 保護範圍：續作前後 Main、桌面與 VR TerrainData、EditorBuildSettings、原有三個渲染設定及 SceneTemplateSettings 雜湊相同。ProjectSettings.asset 額外出現各平台 DOTWEEN 符號；已核對 Unity Skills 的 DOTweenPresenceDetector 會自動寫入符號，原有 batching 調整保留，整份檔案繼續排除提交。沒有重設或清理原有五個未提交檔案，也未將它們納入動畫提交。
+- 尚未人工驗收動畫速度、可讀性與舒適度；未做原生鍵鼠／OS 焦點或視窗連續縮放驗收。仍僅 S2，未推送、建立 PR、開始 S3–S5、建置或 XR。

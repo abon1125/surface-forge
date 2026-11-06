@@ -98,6 +98,12 @@ MenuAnchor 上的 SimulationPropMenu 常駐處理 Tab 按鍵邊緣及 Esc 收合
 
 SimulationPropCatalog 以四個場景項目重用 PropCatalogItemView 的純顯示 Bind，不使用桌面 PropCatalogView 或 PropItemDragHandler，不動共用道具資料。四項同時可見，本階段不需要 ScrollRect；Canvas 無 GraphicRaycaster，CanvasGroup 不接受互動或射線，所有 Graphic.raycastTarget=false，既有 InputSystemUIInputModule 無法透過普通滑鼠操作清單。捲動、射線、拖曳、取消及放置仍留待 S3–S5，不建立空殼系統。
 
+### S2 動畫補充（2026-11-06）
+
+使用者導入 DOTween 免費版 1.3.045 後，S2 改用從左球展開的位移、縮放及淡入動畫。單一 progress Tween 由 0 到 1，MenuAnchor 仍逐幀跟隨並朝向 Camera；Canvas 在左球位置與最終錨點間插值，縮放由 15% 到原尺寸、CanvasGroup.alpha 由 0 到 1，不改 S1 球偏移或面板最終構圖。預設開啟 0.25 秒 OutCubic、收回 0.18 秒 InCubic；時間、比例及 Ease 可於 Inspector 調整。使用 unscaled time，動畫不受 Time.timeScale 暫停影響。
+
+IsExpanded 表示目標開關狀態，收回期間 Canvas 仍有效但依舊不接受互動；完成才停用。Tab／Esc 從當前進度切換，僅保留一個自有 Tween，不重建 UI；剩餘時長依進度距離縮短。失焦或應用程式暫停時終止動畫並對齊當前目標，仍需放開 Tab 再按；停用、重啟或卸載回到收合並清理。Tween 綁定常駐 MenuAnchor，清理只作用於自身；DOTween 的套件持久 driver 由套件管理，專案不另建跨場景單例或呼叫 KillAll。動畫與人工驗收限制見 S2Validation 的動畫補記。
+
 ## 6. 右控制器射線與輸入優先順序
 
 瞄準流程：

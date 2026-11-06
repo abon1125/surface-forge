@@ -11,6 +11,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+using DG.Tweening;
 
 namespace SurfaceForge.Tests
 {
@@ -37,6 +38,65 @@ namespace SurfaceForge.Tests
         private IEnumerator Keys(params Key[] keys)
         {
             InputSystem.QueueStateEvent(keyboard,new KeyboardState(keys));yield return Frames();
+        }
+        private static IEnumerator AnimateFor(float seconds)
+        {
+            float until=Time.realtimeSinceStartup+seconds;
+            while(Time.realtimeSinceStartup<until)yield return Frames(1);
+        }
+        [UnityTest]
+        public IEnumerator AnimationReversalAndInterruptedCleanup()
+        {
+            var panel=Field<GameObject>("panel");var group=panel.GetComponent<CanvasGroup>();
+            Call("SetExpanded",true);
+            // 控制 Tween 時間，避免低幀率跨過短動畫的終點。
+            Field<Tween>("transition").Pause().Goto(0.06f);
+            Call("LateUpdate");
+            float before=Field<float>("progress");Assert.That(before,Is.InRange(0.01f,0.99f));
+            Assert.That(group.alpha,Is.InRange(0.01f,0.99f));
+            Call("SetExpanded",false);Assert.That(Field<float>("progress"),Is.EqualTo(before));
+            Assert.That(panel.activeSelf,Is.True,"關閉動畫完成前保持 Canvas 有效");
+            Call("SetExpanded",true);yield return AnimateFor(0.35f);
+            Assert.That(group.alpha,Is.EqualTo(1).Within(0.001f));Assert.That(Field<object>("transition"),Is.Null);
+            Assert.That(panel.transform.localPosition.magnitude,Is.LessThan(0.001f));
+            Call("SetExpanded",false);Call("OnApplicationFocus",false);
+            Assert.That(panel.activeSelf,Is.False);Assert.That(Field<object>("transition"),Is.Null);
+            Call("OnApplicationFocus",true);Call("SetExpanded",true);menu.enabled=false;
+            Assert.That(menu.IsExpanded,Is.False);Assert.That(Field<object>("transition"),Is.Null);
+            menu.enabled=true;Call("SetExpanded",true);yield return AnimateFor(0.35f);
+            Call("SetExpanded",false);yield return AnimateFor(0.3f);
+            Assert.That(panel.activeSelf,Is.False);Assert.That(group.alpha,Is.Zero);Assert.That(Field<object>("transition"),Is.Null);
+        }
+        [UnityTest]
+        public IEnumerator AnimatedFollowAndSceneUnloadOwnOnlyItsTween()
+        {
+            Call("SetExpanded",true);
+            var owned=Field<Tween>("transition");owned.Pause().Goto(0.08f);
+            var player=Object.FindFirstObjectByType<SimulationPlayer>();
+            player.enabled=false;
+            var motor=player.GetComponent<CharacterController>();motor.enabled=false;
+            player.transform.position+=new Vector3(2,0,1);player.transform.rotation=Quaternion.Euler(0,100,0);
+            player.transform.Find("ViewPivot").localRotation=Quaternion.Euler(-50,0,0);
+            Call("LateUpdate");
+            var panel=Field<GameObject>("panel");float p=Field<float>("progress");
+            var left=menu.transform.parent;
+            Assert.That(Vector3.Distance(panel.transform.position,Vector3.Lerp(left.position,menu.transform.position,p)),Is.LessThan(0.001f));
+            Assert.That(panel.transform.lossyScale.x,Is.EqualTo(0.001f*Mathf.Lerp(0.15f,1,p)).Within(0.00001f));
+            Assert.That(panel.GetComponent<CanvasGroup>().alpha,Is.EqualTo(p).Within(0.001f));
+            float unrelatedValue=0;
+            var unrelated=DOTween.To(()=>unrelatedValue,v=>unrelatedValue=v,1,10).Pause();
+            try
+            {
+                var scene=menu.gameObject.scene;
+                var empty=UnityEngine.SceneManagement.SceneManager.CreateScene("S2AnimationExit");
+                UnityEngine.SceneManagement.SceneManager.SetActiveScene(empty);
+                var unload=UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene);
+                while(!unload.isDone)yield return null;
+                Assert.That(owned.IsActive(),Is.False,"場景卸載清理自己的 Tween");
+                Assert.That(unrelated.IsActive(),Is.True,"不清除其他系統 Tween");
+                Assert.That(Cursor.visible,Is.True);Assert.That(Cursor.lockState,Is.EqualTo(CursorLockMode.None));
+            }
+            finally {unrelated.Kill();}
         }
         [UnitySetUp]
         public IEnumerator Setup()

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using DG.Tweening;
 
 namespace SurfaceForge.UI
 {
@@ -14,24 +15,65 @@ namespace SurfaceForge.UI
         [SerializeField] private Vector2 panelSize = new Vector2(380, 380);
         [SerializeField, Min(0.0001f)] private float metresPerPixel = 0.001f;
         [SerializeField] private Vector3 facingOffset;
+        [Header("左球展開動畫")]
+        [SerializeField, Min(0.01f)] private float openDuration = 0.25f;
+        [SerializeField, Min(0.01f)] private float closeDuration = 0.18f;
+        [SerializeField, Range(0.01f, 1)] private float collapsedScale = 0.15f;
+        [SerializeField] private Ease openEase = Ease.OutCubic;
+        [SerializeField] private Ease closeEase = Ease.InCubic;
+        private Tween transition;
+        private float progress;
+        private CanvasGroup canvasGroup;
+        private bool expanded;
         private bool focused = true;
         private bool tabHeld = true;
-        public bool IsExpanded => panel && panel.activeSelf;
+        // 代表目標狀態；收回期間 Canvas 仍保持有效，直到動畫完成。
+        public bool IsExpanded => expanded;
 
         private void OnEnable() { tabHeld = true; Close(); }
         private void OnDisable() { tabHeld = true; Close(); }
-        private void OnApplicationFocus(bool value) { focused = value; tabHeld = true; }
-        private void OnApplicationPause(bool value) { if (value) tabHeld = true; }
-        private void Close() { if (panel) panel.SetActive(false); }
+        private void OnApplicationFocus(bool value) { focused = value; tabHeld = true; if (!value) Snap(expanded); }
+        private void OnApplicationPause(bool value) { if (value) { tabHeld = true; Snap(expanded); } }
+        private void OnDestroy() { KillTransition(); }
+        private void Close() { Snap(false); }
+        private void KillTransition() { transition?.Kill(); transition = null; }
+        private void Snap(bool value)
+        {
+            KillTransition(); expanded = value; progress = value ? 1 : 0;
+            if (!panel) return;
+            panel.SetActive(value); ApplyVisual();
+        }
+        private void SetExpanded(bool value)
+        {
+            if (!panel || expanded == value) return;
+            KillTransition(); expanded = value; panel.SetActive(true); ApplyVisual();
+            float target = value ? 1 : 0;
+            float duration = (value ? openDuration : closeDuration) * Mathf.Abs(target - progress);
+            // 單一進度同時驅動位置、縮放及透明度；反向時不重設起點。
+            transition = DOTween.To(() => progress, p => progress = p, target, Mathf.Max(0.001f, duration))
+                .SetEase(value ? openEase : closeEase).SetUpdate(true)
+                .SetTarget(this).SetLink(gameObject, LinkBehaviour.KillOnDestroy)
+                .OnComplete(() => { transition = null; if (!expanded && panel) panel.SetActive(false); ApplyVisual(); });
+        }
+        private void ApplyVisual()
+        {
+            if (!panel) return;
+            if (!canvasGroup) canvasGroup = panel.GetComponent<CanvasGroup>();
+            if (canvasGroup) canvasGroup.alpha = progress;
+            var rect = (RectTransform)panel.transform;
+            rect.sizeDelta = panelSize;
+            rect.localPosition = transform.InverseTransformPoint(transform.parent.position) * (1 - progress);
+            rect.localScale = Vector3.one * metresPerPixel * (panel.activeSelf ? Mathf.Lerp(collapsedScale, 1, progress) : 1);
+        }
         private void Update()
         {
             var keyboard = Keyboard.current;
             if (!focused || !Application.isFocused || keyboard == null) { tabHeld = true; return; }
             bool held = keyboard.tabKey.isPressed;
             // 以持續狀態偵測邊緣；中斷後必須先觀察放開，避免回焦重播按鍵。
-            if (held && !tabHeld && panel) panel.SetActive(!panel.activeSelf);
+            if (held && !tabHeld && panel) SetExpanded(!expanded);
             tabHeld = held;
-            if (keyboard.escapeKey.isPressed) Close();
+            if (keyboard.escapeKey.isPressed) SetExpanded(false);
         }
         private void LateUpdate()
         {
@@ -43,9 +85,7 @@ namespace SurfaceForge.UI
             transform.position = parent.position + parent.rotation * anchorOffset;
             transform.rotation = Quaternion.LookRotation(transform.position - viewer.position, viewer.up)
                 * Quaternion.Euler(facingOffset);
-            var rect = (RectTransform)panel.transform;
-            rect.sizeDelta = panelSize;
-            rect.localScale = Vector3.one * metresPerPixel;
+            ApplyVisual();
         }
     }
 }

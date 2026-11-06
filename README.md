@@ -21,7 +21,7 @@
 
 指引線與落點標記規劃於獨立 VR 模擬場景實作，不列入桌面場景。早期代理輸入測試的限制保留於驗證紀錄作為歷史觀察；使用者已於 2026-11-06 確認 Editor Play Mode 人工測試沒有問題。
 
-鍵鼠 VR 模擬在 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 逐階段開發，使用獨立 TerrainData 副本並共用道具資產。兩個場景完成後，才加入啟動場景選單，讓驗收者在同一個 Windows App 選擇桌面版或 VR 模擬版，並可返回選單。完整邊界驗收與正式建置延後到整合階段，各功能開發期間仍進行基本驗證。目前已完成 S0 獨立場景及地形副本與 S1 模擬角色，可直接開啟 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 進入 Play Mode。WASD 依水平觀看方向貼地行走，按住右鍵移動滑鼠觀看，放開恢復游標；不跳躍，CharacterController 處理碰撞、45° 坡度限制及 Terrain 邊界停止。第一人稱畫面包含固定跟隨的左右小球，膠囊預設僅投射陰影。速度、尺寸、球偏移、靈敏度與俯仰限制可於 SimulationPlayer Inspector 調整。S1 已完成 Editor 自動測試及構圖檢查，已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過）；S2 已加入左球上方的 World Space 道具面板：Tab 每次新按下切換，Esc 關閉，初始／重啟／重載收合，失焦後需放開 Tab 再按。四種名稱與圖示共用既有資料，僅供顯示，尚無點選、拖曳或捲動。MenuAnchor 的 SimulationPropMenu 可調面板公尺偏移、畫布大小、縮放及朝向，不更動 S1 設定。S2 人工可讀性及操作舒適度待確認；S3–S5、道具互動及啟動選單尚未實作。實際結果與限制見 [S0 驗證紀錄](Docs/S0Validation.md)、[S1 驗證紀錄](Docs/S1Validation.md)及 [S2 驗證紀錄](Docs/S2Validation.md)。詳細內容請參閱[開發計畫](Docs/DevelopmentPlan.md)與 [VR 模擬規格](Docs/VRSimulationDevelopment.md)。鍵鼠模擬不等於 XR 硬體驗證。
+鍵鼠 VR 模擬在 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 逐階段開發，使用獨立 TerrainData 副本並共用道具資產。兩個場景完成後，才加入啟動場景選單，讓驗收者在同一個 Windows App 選擇桌面版或 VR 模擬版，並可返回選單。完整邊界驗收與正式建置延後到整合階段，各功能開發期間仍進行基本驗證。目前已完成 S0 獨立場景及地形副本與 S1 模擬角色，可直接開啟 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 進入 Play Mode。WASD 依水平觀看方向貼地行走，按住右鍵移動滑鼠觀看，放開恢復游標；不跳躍，CharacterController 處理碰撞、45° 坡度限制及 Terrain 邊界停止。第一人稱畫面包含固定跟隨的左右小球，膠囊預設僅投射陰影。速度、尺寸、球偏移、靈敏度與俯仰限制可於 SimulationPlayer Inspector 調整。S1 已完成 Editor 自動測試及構圖檢查，已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過）；S2 已加入左球上方的 World Space 道具面板：Tab 每次新按下切換，Esc 關閉；面板以 DOTween 從左球附近縮放、位移並淡入，收回後隱藏，初始／重啟／重載收合，失焦後需放開 Tab 再按。四種名稱與圖示共用既有資料，僅供顯示，尚無點選、拖曳或捲動。MenuAnchor 的 SimulationPropMenu 可調面板公尺偏移、畫布大小、縮放、朝向，以及開合時間、起始比例與緩動，不更動 S1 設定。S2 人工可讀性及操作舒適度待確認；S3–S5、道具互動及啟動選單尚未實作。實際結果與限制見 [S0 驗證紀錄](Docs/S0Validation.md)、[S1 驗證紀錄](Docs/S1Validation.md)及 [S2 驗證紀錄](Docs/S2Validation.md)。詳細內容請參閱[開發計畫](Docs/DevelopmentPlan.md)與 [VR 模擬規格](Docs/VRSimulationDevelopment.md)。鍵鼠模擬不等於 XR 硬體驗證。
 
 | 穩定 ID／名稱 | 模型尺寸（公尺） | 模型碰撞器 |
 | --- | --- | --- |
@@ -44,3 +44,6 @@
 模型採用 Unity 基本形狀與本專案製作的錐體網格；圖示與材質配色皆為本專案製作，未加入外部美術素材。
 
 已執行的檢查與限制請參閱 [M1 驗證紀錄](Docs/M1Validation.md)、[M2 驗證紀錄](Docs/M2Validation.md)、[M3 驗證紀錄](Docs/M3Validation.md)與 [M4 驗證紀錄](Docs/M4Validation.md)。使用者已於 2026-11-06 確認桌面 Editor Play Mode 人工驗收沒有問題，未另行記錄逐項覆蓋範圍與重複次數。目前尚未提供 Windows 執行檔或錄影；執行檔驗收及原生視窗連續縮放驗收，將在兩個場景完成後的場景選單整合階段執行。
+
+
+S2 動畫使用 DOTween 免費版 1.3.045（使用者導入），由 Daniele Giardini／Demigiant 製作，保留套件原始著作權及 readme；詳見 [DOTween 授權](https://dotween.demigiant.com/license.php)。不需要 DOTween Pro。預設開啟 0.25 秒 OutCubic、關閉 0.18 秒 InCubic、起始比例 15%；快速 Tab 會從目前進度反向，不跳回起點。失焦／暫停時立即對齊目標狀態，停用或卸載時清理面板 Tween。
