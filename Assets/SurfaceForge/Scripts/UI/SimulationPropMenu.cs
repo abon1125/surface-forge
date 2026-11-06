@@ -22,6 +22,7 @@ namespace SurfaceForge.UI
         [SerializeField, Range(0.01f, 1)] private float collapsedScale = 0.15f;
         [SerializeField] private Ease openEase = Ease.OutCubic;
         [SerializeField] private Ease closeEase = Ease.InCubic;
+        public event System.Action<bool> InputCancelled;
         private Tween transition;
         private float progress;
         private CanvasGroup canvasGroup;
@@ -33,7 +34,7 @@ namespace SurfaceForge.UI
         public bool IsInteractive => isActiveAndEnabled && expanded && progress >= 1 && panel && panel.activeInHierarchy;
 
         private void OnEnable() { requireTabRelease = true; Close(); }
-        private void OnDisable() { requireTabRelease = true; Close(); }
+        private void OnDisable() { InputCancelled?.Invoke(true); requireTabRelease = true; Close(); }
         private void OnApplicationFocus(bool value) { focused = value; requireTabRelease = true; if (!value) Snap(expanded); }
         private void OnApplicationPause(bool value) { if (value) { requireTabRelease = true; Snap(expanded); } }
         private void OnDestroy() { KillTransition(); }
@@ -49,6 +50,7 @@ namespace SurfaceForge.UI
         {
             if (!panel || expanded == value) return;
             if (!value && placement) placement.Cancel();
+            InputCancelled?.Invoke(false);
             KillTransition(); expanded = value; panel.SetActive(true); ApplyVisual();
             float target = value ? 1 : 0;
             float duration = (value ? openDuration : closeDuration) * Mathf.Abs(target - progress);
@@ -87,7 +89,7 @@ namespace SurfaceForge.UI
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (placement && placement.IsDragging) placement.Cancel();
-                else SetExpanded(false);
+                else { InputCancelled?.Invoke(true); SetExpanded(false); }
             }
         }
         private void LateUpdate()

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -18,6 +20,15 @@ namespace SurfaceForge.UI
         [SerializeField, Min(1)] private float wheelUnitsPerStep = 120;
         [SerializeField] private PlacementController placement;
         [SerializeField] private PlacementGuideView placementGuide;
+        [SerializeField] private SimulationSelectionController selection;
+        [SerializeField, Min(1)] private float clickMovementThreshold = 6;
+        private struct Sample { public Vector2 Position; public bool Down, Up, Held, Right; }
+        private readonly List<Sample> samples = new List<Sample>();
+        private bool scenePressed, sceneRejected;
+        private Vector2 scenePressPosition;
+        private PlacedProp sceneTarget;
+        private InputSettings inputSettings;
+        private bool previousEventMerging;
         [SerializeField, Min(1)] private float dragThreshold = 18;
         private SimulationPropItem dragSource;
         private Vector2 pressLocal;
@@ -35,6 +46,12 @@ namespace SurfaceForge.UI
         {
             base.OnEnable();
             if (placement) placement.Finished += PlacementFinished;
+            if (selection) selection.Unavailable += Interrupt;
+            if (menu) menu.InputCancelled += MenuCancelled;
+            inputSettings = InputSystem.settings;
+            previousEventMerging = inputSettings.disableRedundantEventsMerging;
+            inputSettings.disableRedundantEventsMerging = true;
+            InputSystem.onEvent += CaptureSample;
             if (player) player.Unavailable += Interrupt;
             if (worldRaycaster) worldRaycaster.Unavailable += Interrupt;
         }
@@ -52,6 +69,7 @@ namespace SurfaceForge.UI
             Draw();
             if (OwnsDrag)
             {
+                ClearScenePress(); samples.Clear();
                 if (!menu.IsInteractive || !dragSource || !dragSource.isActiveAndEnabled || !placement || !placement.isActiveAndEnabled || !placement.IsDragging)
                 { Interrupt(); return; }
                 placement.UpdateWorld(this, CurrentRay, CurrentHit.UI);
@@ -65,8 +83,11 @@ namespace SurfaceForge.UI
                 if (!mouse.leftButton.isPressed) Interrupt();
                 return; // 擁有權期間不派送 hover、click 或滾輪。
             }
+            if (pressed && !pressed.activeInHierarchy) { MenuCancelled(false); return; }
             if (dragSource && !dragSource.isActiveAndEnabled) { Interrupt(); return; }
-            if (!menu.IsInteractive) { CancelPointer(); requireRelease = true; return; }
+            if (!menu || !menu.isActiveAndEnabled || (selection && !selection.isActiveAndEnabled)) { Interrupt(); return; }
+            bool leftUI = CurrentHit.UI && CurrentHit.UI.transform.IsChildOf(menu.transform);
+            if (!menu.IsInteractive && leftUI) { CancelPointer(); ClearScenePress(); samples.Clear(); requireRelease = true; return; }
             if (pointer == null) pointer = new PointerEventData(eventSystem) { pointerId = -100, button = PointerEventData.InputButton.Left };
             pointer.position = worldRaycaster.ViewCamera.WorldToScreenPoint(CurrentHit.Point);
             pointer.pointerCurrentRaycast = new RaycastResult { gameObject = CurrentHit.UI, worldPosition = CurrentHit.Point,
@@ -75,20 +96,17 @@ namespace SurfaceForge.UI
             if (requireRelease)
             {
                 if (!mouse.leftButton.isPressed) requireRelease = false;
+                samples.Clear(); ClearScenePress();
                 return;
             }
-            bool down = mouse.leftButton.wasPressedThisFrame;
-            bool up = mouse.leftButton.wasReleasedThisFrame;
-            if (pressed && dragSource && mouse.leftButton.isPressed && !up && TryStartDrag()) return;
-            // 同影格放開再按住：先結束舊操作，新操作等待下一次放開。
-            if (down && up && mouse.leftButton.isPressed) { Release(); Press(); }
-            else
-            {
-                if (down) Press();
-                if (up) Release();
-            }
+            ProcessSamples();
+            if (requireRelease || OwnsDrag) return;
+            CurrentRay = worldRaycaster.Aim(position);
+            CurrentHit = worldRaycaster.Query(CurrentRay);
+            UpdatePointer(); Draw();
+            if (pressed && dragSource && mouse.leftButton.isPressed && TryStartDrag()) return;
             Vector2 wheel = mouse.scroll.ReadValue() / wheelUnitsPerStep;
-            if (!pressed && wheel.sqrMagnitude > 0 && CurrentHit.UI && list && list.isActiveAndEnabled && list.viewport &&
+            if (menu.IsInteractive && !pressed && wheel.sqrMagnitude > 0 && CurrentHit.UI && list && list.isActiveAndEnabled && list.viewport &&
                 CurrentHit.UI.transform.IsChildOf(list.viewport) && InsideViewport(CurrentHit.Point))
             {
                 pointer.scrollDelta = wheel;
@@ -103,6 +121,8 @@ namespace SurfaceForge.UI
             Vector2 local = rect.InverseTransformPoint(CurrentRay.GetPoint(distance));
             if ((local - pressLocal).sqrMagnitude < dragThreshold * dragThreshold || rect.rect.Contains(local)) return false;
             if (!placement || !placement.BeginWorld(this, dragSource.GetComponent<PropCatalogItemView>().Definition, CurrentRay, CurrentHit.UI)) return false;
+            if (selection) selection.ClearSelection();
+            ClearScenePress(); samples.Clear();
             OwnsDrag = true;
             player.SetPlacementInput(true);
             if (list) list.StopMovement();
@@ -119,6 +139,7 @@ namespace SurfaceForge.UI
         }
         private void PlacementFinished()
         {
+            ClearScenePress(); samples.Clear();
             OwnsDrag = false;
             ClearSource();
             if (player) player.SetPlacementInput(false);
@@ -190,8 +211,82 @@ namespace SurfaceForge.UI
                 if (CurrentHit.HasHit) hitMarker.position = CurrentHit.Point;
             }
         }
+        private void MenuCancelled(bool clearSelection)
+        {
+            CancelPointer(); ClearScenePress(); samples.Clear(); requireRelease = true;
+            if (clearSelection && selection) selection.ClearSelection();
+        }
+        private void CaptureSample(InputEventPtr inputEvent, InputDevice device)
+        {
+            if (InputState.currentUpdateType != InputUpdateType.Dynamic || device != Mouse.current ||
+                !(device is Mouse mouse) || (!inputEvent.IsA<StateEvent>() && !inputEvent.IsA<DeltaStateEvent>())) return;
+            var position = mouse.position.ReadValueFromEvent(inputEvent, out var p) ? p : mouse.position.ReadValue();
+            bool held = mouse.leftButton.isPressed;
+            bool hasButton = mouse.leftButton.ReadValueFromEvent(inputEvent, out var button);
+            bool next = hasButton ? button >= mouse.leftButton.pressPointOrDefault : held;
+            bool right = mouse.rightButton.ReadValueFromEvent(inputEvent, out var r) ? r >= mouse.rightButton.pressPointOrDefault : mouse.rightButton.isPressed;
+            samples.Add(new Sample { Position = position, Down = next && !held, Up = !next && held, Held = next, Right = right });
+        }
+        private void SceneTargetUnavailable() => MenuCancelled(false);
+        private void ClearScenePress()
+        {
+            if (sceneTarget) sceneTarget.Unavailable -= SceneTargetUnavailable;
+            scenePressed = sceneRejected = false; sceneTarget = null;
+        }
+        private void UpdatePointer()
+        {
+            pointer.position = worldRaycaster.ViewCamera.WorldToScreenPoint(CurrentHit.Point);
+            pointer.pointerCurrentRaycast = new RaycastResult { gameObject = CurrentHit.UI, worldPosition = CurrentHit.Point,
+                worldNormal = CurrentHit.Normal, distance = CurrentHit.Distance, screenPosition = pointer.position };
+            HandlePointerExitAndEnter(pointer, CurrentHit.UI);
+        }
+        private void ProcessSamples()
+        {
+            // 複製後清空：刪除／停用回呼可安全取消本批剩餘事件。
+            var batch = samples.ToArray(); samples.Clear();
+            foreach (var sample in batch)
+            {
+                if (requireRelease) return;
+                if (!InGameView(sample.Position) || (sample.Right && !OwnsDrag)) { Interrupt(); return; }
+                CurrentRay = worldRaycaster.Aim(sample.Position);
+                CurrentHit = worldRaycaster.Query(CurrentRay);
+                if (OwnsDrag)
+                {
+                    placement.UpdateWorld(this, CurrentRay, CurrentHit.UI); UpdateGuide();
+                    if (sample.Up) { placement.EndWorld(this, CurrentRay, CurrentHit.UI); return; }
+                    continue;
+                }
+                bool leftUI = CurrentHit.UI && CurrentHit.UI.transform.IsChildOf(menu.transform);
+                if (leftUI && !menu.IsInteractive) { MenuCancelled(false); return; }
+                UpdatePointer();
+                var target = !CurrentHit.UI ? PropSelectionState.Resolve(CurrentHit.Collider) : null;
+                if (sample.Down)
+                {
+                    ClearScenePress();
+                    scenePressed = !CurrentHit.UI;
+                    sceneTarget = target; scenePressPosition = sample.Position;
+                    if (sceneTarget) sceneTarget.Unavailable += SceneTargetUnavailable;
+                    Press();
+                }
+                bool moved = (sample.Position - scenePressPosition).sqrMagnitude > clickMovementThreshold * clickMovementThreshold;
+                if (scenePressed && (CurrentHit.UI || moved)) sceneRejected = true;
+                // 刪除按鈕移出／拖動後不再構成點擊；來源項目沿用 S4 的世界平面拖曳門檻。
+                if (pressed && !dragSource && moved) pointer.eligibleForClick = false;
+                if (pressed && dragSource && sample.Held && !sample.Down && TryStartDrag()) continue;
+                if (sample.Up)
+                {
+                    bool accept = scenePressed && !sceneRejected && !CurrentHit.UI && target == sceneTarget;
+                    ClearScenePress();
+                    Release();
+                    if (requireRelease) return;
+                    if (accept && selection && selection.isActiveAndEnabled) selection.Select(target);
+                }
+            }
+        }
         private void Interrupt()
         {
+            ClearScenePress(); samples.Clear();
+            if (selection) selection.ClearSelection();
             if (OwnsDrag && placement) placement.Cancel(this);
             PlacementFinished();
             CancelPointer(); requireRelease = true; CurrentHit = default; CurrentRay = default;
@@ -203,6 +298,11 @@ namespace SurfaceForge.UI
         {
             Interrupt();
             if (placement) placement.Finished -= PlacementFinished;
+            if (selection) selection.Unavailable -= Interrupt;
+            if (menu) menu.InputCancelled -= MenuCancelled;
+            InputSystem.onEvent -= CaptureSample;
+            if (inputSettings) inputSettings.disableRedundantEventsMerging = previousEventMerging;
+            inputSettings = null;
             if (player) player.Unavailable -= Interrupt;
             if (worldRaycaster) worldRaycaster.Unavailable -= Interrupt;
             base.OnDisable();
