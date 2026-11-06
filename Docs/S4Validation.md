@@ -34,3 +34,9 @@ S4 尚未獲使用者對放置精準度、18 單位門檻、透明度、圓環�
 
 最終檢查：暫時工具與 meta 已經 AssetDatabase.DeleteAsset 移除。工具移除後編譯 succeeded=true、errorCount=0（2026-11-06T10:19:06.7530326Z）；獨立 Play Mode 0827c21c completed，healthy=true、errorCount=0，5 秒後已退出，VRSimulation isDirty=false。保護範圍開始／結束 SHA-256 全數一致，包含 Main、兩份 TerrainData、建置設定、共享資產與原有五個設定；後者完整排除功能提交。Git 空白檢查排除 Unity 序列化空值欄位的行尾空白，其餘通過。
 資產參照檢查：場景新增 GUID 全數解析至本專案 meta，其他 GUID 與既有場景參照集合相符；暫時工具不存在。新增腳本、測試及三份材質 meta 成對，兩份 TerrainData 的既有 LFS 規則與內容保持不變。
+
+## 使用者試玩與 PR 授權補記（2026-11-06）
+
+適用功能提交 f8033dba911314db42b4a06cadca0ba6bc6ea5aa。使用者回報「目前 play 測試正常」，並要求提交 PR 及審查，記錄為 S4 Editor Play Mode 整體試玩確認。本補記更新目前人工確認與推送授權狀態；上述初次交付時的限制及未推送敘述保留為歷史，不代表此次沒有 PR 授權。
+
+使用者未逐項回報放置精準度、門檻、透明度、圓環、舒適度、原生焦點與縮放等案例，不將整體確認擴大成逐項驗收，也不包含 Windows 或 XR。本次文件補記沒有重跑 Unity 測試，原有 job 與診斷保持原意。依 AGENT.md 請求 GitHub Codex Review，以繁體中文審查並確認最新 head；本次沒有合併或 S5 授權。

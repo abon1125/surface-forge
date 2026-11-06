@@ -47,3 +47,5 @@
 
 
 S2 動畫使用 DOTween 免費版 1.3.045（使用者導入），由 Daniele Giardini／Demigiant 製作，保留套件原始著作權及 readme；詳見 [DOTween 授權](https://dotween.demigiant.com/license.php)。不需要 DOTween Pro。預設開啟 0.25 秒 OutCubic、關閉 0.18 秒 InCubic、起始比例 15%；快速 Tab 會從目前進度反向，不跳回起點。失焦／暫停時立即對齊目標狀態，停用或卸載時清理面板 Tween。
+
+S4 使用者已於 2026-11-06 回報目前 Editor Play Mode 測試正常；此為整體試玩確認，未另列精準度、舒適度、原生焦點及縮放的逐項結果，詳見 [S4 驗證紀錄](Docs/S4Validation.md)。
