@@ -1,52 +1,58 @@
-# M3 validation
+# M3 驗證紀錄
 
-Environment: Unity 6000.3.25f1 Windows Editor, URP 17.3.0, Input System 1.20.0. Date: 2026-11-05. Baseline: main `8ae340d`, including merged M2 `359bb93` (PR #3). No package changes.
+歷史提交參照：本文件保留原 SHA 與驗證當時的事實；改寫後提交請查閱 [Git 歷史遷移紀錄](GitHistoryMigration.md)。測試 job ID 不是提交 SHA，保持原值。舊測試與審查結果仍對應原提交，不代表已在新 SHA 重跑。
 
-## Delivered behavior
+## 使用者驗收更新 — 2026-11-06
 
-- `PropItemDragHandler` routes a threshold-qualified left-button horizontal gesture to placement and a vertical gesture to the existing ScrollRect. The initial direction owns the gesture until release. Wheel scrolling still bubbles to ScrollRect. The ScrollRect is never disabled; horizontal gestures stop its inertia, and vertical end/disable/focus-loss paths end its drag. Rows are not moved or reordered.
-- `PlacementController` owns one preview, source and definition. Preview and placed instances have separate lifetimes. Release checks current coordinates, screen bounds, every GraphicRaycaster UI result and a fresh surface query before creating exactly one object. Escape, missing/released mouse, leaving screen bounds, focus/pause loss and controller/source disable cancel. LateUpdate handles a release that UI did not deliver after UI has had its Update opportunity.
-- `SurfacePlacementQuery` uses an explicitly assigned camera, TerrainCollider, Surface mask, 500 m maximum ray distance and 50 m invalid ray depth. It checks the collider's layer against the mask and raycasts that collider directly. Props cannot occlude it. The shared pose calculation places the root at the hit point and rotates local up to the hit normal, with no world-Y correction.
-- Preview colliders are disabled and the hierarchy uses Ignore Raycast. Two authored URP Unlit materials distinguish green valid and red invalid states. Shared prefab/material assets are untouched; no runtime material clones are created. UI hides the preview; a miss uses the current pointer ray at fixed depth. Placed props use Default, keep model colliders and carry a `PlacedProp.Definition` reference. No Rigidbody, overlap rejection, persistence, selection, deletion or guides were added.
-- Main and the reusable row prefab are wired through Unity Editor APIs. M1 terrain/camera and M2 prop/data/icon/model assets are retained. The sidebar caption explains horizontal dragging.
+使用者確認已在 Unity Editor Play Mode 人工測試桌面版，未發現問題。依此回報記錄為 Editor Play Mode 人工驗收完成；未另行回報個別手勢、解析度或重複次數。代理先前未成功的拖曳注入嘗試保留為歷史觀察，不推翻使用者驗收。以下待驗收敘述均為此次更新前的歷史狀態。Windows 執行檔與原生視窗連續縮放驗收仍安排於 I2。
 
-## Performed validation
+環境：Unity 6000.3.25f1 Windows Editor、URP 17.3.0、Input System 1.20.0。日期：2026-11-05。基準：main `8ae340d`，包含已合併 M2 `359bb93`（PR #3）。無套件變更。
 
-### Automated tests
+## 已交付行為
 
-The permanent fixture is listed under EditMode and explicitly enters Play Mode in a fresh isolated scene for runtime callbacks. It covers anchor/normal pose, surface invalidation at release, exactly-once commit and data/collider retention, preview/commit pose equivalence and shared preview material, UI becoming raycastable at release, repeated controller/source-disable and focus-loss cancellation, release coordinates outside the surface, and cleanup on a following frame without an EndDrag event. Initial implementation run: 7/7 passed (job `6cac8105`). After the cloud-review fix and fixture improvements, the complete final run passed 8/8, 0 failed or skipped (job `7dbbc01f`). The added regression routes right-button drag/end events with the same pointer ID during a left-button drag and confirms they cannot move or commit it.
+- `PropItemDragHandler` 將超過門檻的左鍵水平手勢交給放置，垂直手勢交給既有 ScrollRect。初始方向擁有整次手勢，直到放開；滾輪仍會向上傳遞至 ScrollRect。ScrollRect 從不停用；水平手勢停止其慣性，垂直手勢結束／停用／失焦時會結束捲動拖曳。項目不移動或重新排序。
+- `PlacementController` 管理唯一預覽、來源與定義，預覽與正式實例有獨立生命週期。放開時檢查目前座標、螢幕邊界、每個 GraphicRaycaster UI 結果及最新地形查詢，才建立恰好一個物件。Esc、滑鼠不存在／已放開、離開螢幕邊界、失焦／暫停，以及控制器／來源停用皆取消。LateUpdate 在 UI 有機會執行 Update 後，處理 UI 未送達的放開。
+- `SurfacePlacementQuery` 使用明確指定的攝影機、TerrainCollider、Surface 遮罩、500 公尺最長射線距離，以及 50 公尺無效射線深度。檢查碰撞器 layer 是否在遮罩內，並直接對該碰撞器發射射線，道具不能遮擋。共用姿態計算將根節點放在命中點，並將 local up 轉向命中法線，不額外補正世界 Y。
+- 預覽碰撞器停用，完整階層使用 Ignore Raycast。兩份製作好的 URP Unlit 材質分別顯示綠色合法與紅色無效狀態。不修改共用 prefab／材質資產，也不建立執行期材質副本。UI 上隱藏預覽，未命中則沿目前指標射線以固定深度顯示。M3 當時正式道具使用 Default，保留模型碰撞器及 `PlacedProp.Definition` 參照。未加入 Rigidbody、重疊排斥、保存、選取、刪除或指引線。
+- Main 與可重用項目 prefab 透過 Unity Editor API 設定參照，保留 M1 地形／攝影機及 M2 道具／資料／圖示／模型資產，側欄文字說明水平拖曳方式。
 
-Earlier test iterations exposed fixture issues: existing Main UI contaminated EditMode queries; EditMode did not exercise runtime disable callbacks; the test source lacked its controller binding; newly created/re-enabled UI had not received rendered depth for GraphicRaycaster. The fixture now isolates the scene, enters Play Mode, binds its source and waits for UI rendering. A later full rerun exposed background PlayerLoop timing in the two asynchronous cases; the final fixture uses an isolated neutral Input System mouse, CanvasGroup UI blocking, temporary runInBackground (restored in teardown), and explicit Time.frameCount advancement with QueuePlayerLoopUpdate. The intermediate 6/8 results are superseded by the complete 8/8 run. Earlier failures are not counted as passing runs.
+## 已執行驗證
 
-### Main-scene UGUI event simulation and Editor inspection
+### 自動化測試
 
-- Actual Game View sizes were set to 1280 x 720, 1024 x 768, 2560 x 1080, 640 x 480 and 1920 x 1080 during Play Mode. At each size, dispatched 100 threshold-initialized UGUI begin/drag/end gestures across all four definitions: 50 successful releases and 50 cancellations (25 over a row, 25 over background). All cancellations first visited a valid point. Each batch increased placed count by exactly 50: 0 -> 50 -> 100 -> 150 -> 200 -> 250. No preview remained after each batch; subsequent-frame snapshots found zero preview objects and exactly two loaded preview materials.
-- At each size, added 16 temporary row copies and dispatched vertical UGUI drag gestures. Content moved by approximately 150, 162.38, 86.60, 259.81 and 100 UI units respectively. No placement preview started. Removed the copies and confirmed four production rows. This is event simulation, not physical wheel or held-mouse scrolling.
-- Visually inspected the populated Main interface at the five sizes. The wide Game View initially retained an excessive Editor zoom, so reduced the Editor preview scale to show the whole image before inspection. This changes Editor viewing zoom, not product layout. No temporary props or rows were saved into Main.
-- Final compilation after removing temporary tools had no errors; Main entered and exited Play Mode, with no new captured Console errors from this stage. Scene/data/prefab/material/meta references were checked. Temporary author/probe tools used prefixed Unity Skills methods, schema discovery and dry-run before use; they are removed from delivery. A temporary snapshot serializer initially rejected raw Unity Vector values; it was corrected to numeric arrays and is not counted as product behavior.
+永久測試列於 EditMode，會明確進入全新隔離場景的 Play Mode，以執行期回呼驗證。涵蓋錨點／法線姿態、放開時地形失效、恰好提交一次與資料／碰撞器保留、預覽／正式姿態一致與共用預覽材質、放開時 UI 才可接受射線、重複控制器／來源停用與失焦取消、地形外放開座標，以及未收到 EndDrag 時於後續影格清理。初次實作測試為 7/7 通過（job `6cac8105`）。雲端審查修正與測試改善後，最終完整測試 8/8 通過，零失敗／略過（job `7dbbc01f`）。新增回歸會在左鍵拖曳期間傳入相同 pointer ID 的右鍵拖曳／結束事件，確認不能移動或提交該左鍵手勢。
 
-### Actual desktop input
+早期測試暴露測試環境問題：既有 Main UI 干擾 EditMode 查詢；EditMode 未執行執行期停用回呼；測試來源缺少控制器綁定；新建／重新啟用 UI 尚未取得 GraphicRaycaster 所需的渲染深度。最終測試改為隔離場景、進入 Play Mode、綁定來源並等待 UI 渲染。後續完整重測又暴露兩項非同步案例的背景 PlayerLoop 時序問題；最終使用隔離且初始無按鍵狀態的 Input System 滑鼠、CanvasGroup UI 阻擋、暫時 runInBackground（清理時還原），並透過 QueuePlayerLoopUpdate 明確等待 Time.frameCount 前進。中途 6/8 結果已由完整 8/8 取代，早期失敗不列為通過。
 
-- Mouse click expanded the catalog in the 1280 x 720 Game View. A normal row click did not increase placed count.
-- Several desktop drag-injection attempts from the Cube row at 1280 x 720 and 2560 x 1080 did not produce a placed object. Temporary diagnostics observed no placement Begin call from those attempts; the same row/controller references worked through UGUI dispatch. The cause of the missing input event was not established. These attempts are **not passing drag tests**, and no claim is made that all four shapes were physically dragged successfully.
-- The available desktop API exposes an atomic drag, without a supported held-button/move/release sequence across tool calls. Escape during a held physical drag, switching focus mid-drag and leaving the window before releasing were not reliably exercised. Callback-based tests do not replace these input checks.
+### Main 場景 UGUI 事件模擬與 Editor 檢查
 
-## Cloud review
+- 在 Play Mode 將實際 Game View 設為 1280 x 720、1024 x 768、2560 x 1080、640 x 480、1920 x 1080。各尺寸對四種定義共呼叫 100 次已初始化門檻的 UGUI begin／drag／end 手勢：50 次成功放開、50 次取消（25 次項目上、25 次背景上），所有取消都先經過合法落點。各批正式物件恰增加 50：0 → 50 → 100 → 150 → 200 → 250。每批後皆無預覽，後續影格快照確認零預覽物件、恰有兩份已載入預覽材質。
+- 各尺寸加入 16 個暫時項目副本，呼叫垂直 UGUI 拖曳後，內容分別移動約 150、162.38、86.60、259.81、100 UI 單位，未開始放置預覽。移除副本後確認四個正式項目保留。這是事件模擬，不是實際滾輪或按住滑鼠捲動。
+- 檢視五個尺寸的 Main 清單畫面。寬 Game View 最初保留過大的 Editor 縮放，已降低預覽比例後完整檢視；這只改變 Editor 顯示縮放，不改產品排版。未將暫時道具或項目存入 Main。
+- 移除暫時工具後最終編譯無錯誤，Main 可進出 Play Mode，此階段無新增擷取到的 Console 錯誤。已檢查場景／資料／prefab／材質／meta 參照。暫時製作／探查工具使用帶前綴的 Unity Skills 方法，先查詢 schema 並 dry-run，再執行；交付前已移除。暫時快照序列化工具最初不接受原始 Unity Vector，已改為數值陣列，不算產品行為。
 
-The first cloud review completed for `41a3bb0` and raised one valid P2: right-button drag/end callbacks share the mouse pointer ID and could finish a left-button gesture. Added left-button filtering to initialize/drag/end and the regression above. Latest-head re-review is tracked in PR #4; pending review is not a pass.
+### 實際桌面輸入
 
-## Self review and remaining acceptance
+- 1280 x 720 Game View 的滑鼠點擊可展開清單，普通點擊項目不增加正式物件數。
+- 在 1280 x 720、2560 x 1080 從 Cube 項目多次嘗試桌面拖曳注入，未產生正式物件。暫時診斷未觀察到放置 Begin 呼叫，但相同項目／控制器參照可透過 UGUI 呼叫正常運作。未確認輸入事件缺失原因。這些嘗試**不是通過的拖曳測試**，不宣稱四種形狀都已實際拖曳成功。
+- 可用桌面 API 提供一次完成的拖曳，不支援跨工具呼叫維持按住／移動／放開序列。因此未可靠測試按住實際拖曳時按 Esc、途中切換焦點，以及離開視窗後才放開；回呼測試不能取代這些輸入檢查。
 
-Reviewed data references, colliders/layers, direct TerrainCollider rays, anchor/normal pose, fresh release evaluation, UI blocking, gesture ownership, event ordering, preview materials and destruction, focus/disable/pause cleanup and restart. Fixed release fallback ordering by handling an undelivered button release in LateUpdate, after UGUI Update, and reset source gesture ownership on controller cancellation. Added focus/pause cleanup for vertical scrolling and per-frame preview refresh. The two preview materials are assets with no per-drag allocation or destruction responsibility.
+## 雲端審查
 
-Physical dragging of every prop at high/low/slope/boundary locations, continuous preview appearance, held-input Escape/focus interruption, outside-window release/return, and physical scrolling remain user manual acceptance gaps. Agent tests and cloud review do not constitute user acceptance. Desktop build/executable and continuous native-window resize acceptance remain deferred to completion of the necessary features.
+首次對 `41a3bb0` 的雲端審查提出一項有效 P2：右鍵拖曳／結束回呼共用滑鼠 pointer ID，可能結束左鍵手勢。已為初始化／拖曳／結束加入左鍵過濾及上述回歸。當時最新提交的再次審查追蹤於 PR #4，待審查不算通過。
 
-## Manual acceptance
+## 自行審查與當時尚待驗收項目
 
-1. Open Main, enter Play Mode and click PROPS. Click a row normally: no prop appears. Drag each of Cube, Sphere, Cylinder and Cone left out of its row, then move over terrain high/low/slope/inside-edge locations: a single green preview follows; release adds exactly one matching prop and removes the preview. All four rows remain. Compare preview and placed pose; root anchor touches the hit, local up follows the slope.
-2. Start another drag, visit a valid point, then release over a row, blank sidebar, toggle, background or beyond the terrain edge: count must not increase. Preview is hidden on UI and red at a no-hit ray position; no old valid position may be reused. Drag over already placed props: terrain remains queryable.
-3. While dragging, press Escape; repeat with focus switching and with the controller or source/list disabled. Each must clear the preview. Re-enable and start a fresh valid drag: it works. Leave the window with the button held, release outside and return: nothing may be placed. Repeat success/cancel operations at least 50 times and inspect Console and object counts.
-4. Try the five Game View sizes above. Drag horizontally to place; use vertical gestures or wheel to scroll. For overflow, duplicate rows only during Play Mode, verify vertical drag scrolls without a preview, then exit Play Mode to discard temporary changes. Save no runtime copies.
-5. Exit Play Mode. Report any missing-input or unexpected placement with the gesture, resolution and Console details. Do not treat M2's merge or M3's automated review as manual acceptance.
+檢查資料參照、碰撞器／layer、直接 TerrainCollider 射線、錨點／法線姿態、放開時重新判定、UI 阻擋、手勢擁有權、事件順序、預覽材質與銷毀，以及失焦／停用／暫停清理與重啟。將未送達放開的補救處理放在 UGUI Update 後的 LateUpdate，並在控制器取消時重設來源手勢擁有權。加入垂直捲動失焦／暫停清理與每影格預覽更新。兩份預覽材質是資產，不需每次拖曳配置或銷毀。
 
-Status: awaiting user manual acceptance. No automatic merge.
+當時尚待人工確認四種道具在高／低／斜坡／邊界位置的實際拖曳、連續預覽外觀、按住輸入時 Esc／失焦中斷、視窗外放開再返回，以及實際捲動。代理測試與雲端審查不構成人工驗收。桌面建置／執行檔及原生視窗連續縮放仍延後至必要功能完成。
+
+## 人工驗收步驟
+
+1. 開啟 Main、進入 Play Mode、點 PROPS。普通點擊項目不建立道具。將 Cube、Sphere、Cylinder、Cone 各自向左拖出，再移到高／低／斜坡／邊界內位置，確認單一綠色預覽跟隨；放開恰新增一個對應道具並移除預覽，四個項目保留。比較預覽與正式姿態，根錨點接觸命中點、local up 隨斜坡對齊。
+2. 再開始拖曳，先到合法點，再於項目、空側欄、開關、背景或地形邊界外放開，數量不得增加。UI 上隱藏預覽，未命中射線處為紅色，不得重用舊合法落點。拖過已放置道具時仍可查詢地形。
+3. 拖曳時按 Esc，並分別測試切換焦點、停用控制器或來源／清單，都應清除預覽。重新啟用後的新合法拖曳應正常。按住時離開視窗、在外放開再返回，不得放置。重複成功／取消至少 50 次，檢查 Console 與物件數。
+4. 測試上述五個 Game View 尺寸，水平拖曳放置，垂直手勢或滾輪捲動。溢出測試只在 Play Mode 複製項目，確認垂直拖曳捲動且無預覽，離開 Play Mode 後捨棄變更，不儲存執行期副本。
+5. 離開 Play Mode，回報輸入缺失或非預期放置時附上手勢、解析度及 Console 資訊；不能把 M2 合併或 M3 自動審查當作人工驗收。
+
+當時狀態：等待使用者人工驗收，不自動合併。最新人工驗收狀態見文件上方 2026-11-06 更新。

@@ -1,39 +1,45 @@
-# M2 validation
+# M2 驗證紀錄
 
-Environment: Unity 6000.3.25f1 Windows Editor, URP 17.3.0, Input System 1.20.0. Date: 2026-11-05. Baseline: main `73ffede`, including M1 `85c767a`.
+歷史提交參照：本文件保留原 SHA 與驗證當時的事實；改寫後提交請查閱 [Git 歷史遷移紀錄](GitHistoryMigration.md)。測試 job ID 不是提交 SHA，保持原值。舊測試與審查結果仍對應原提交，不代表已在新 SHA 重跑。
 
-## Delivered
+## 使用者驗收更新 — 2026-11-06
 
-- Four bottom-centred prop prefabs, four matching PropDefinition assets, four original icons, four URP materials, and an original closed cone mesh. The complete inventory and dimensions are in README.
-- Reusable PropCatalogItem UI prefab with explicit Image/Text references and a bound Definition property for later pointer handling.
-- Main Sidebar explicitly references the ordered definitions, row prefab and existing scroll content. Awake creates the rows once; expansion only changes visibility. The toggle listener is registered once and removed on destruction.
-- M1 terrain, camera, input system and viewport layout are unchanged. Main's changes replace the empty state with data references and update its caption.
+使用者確認已在 Unity Editor Play Mode 人工測試桌面版，未發現問題。依此回報記錄為 Editor Play Mode 人工驗收完成；未另行回報逐項清單覆蓋範圍、解析度或重複次數。以下待驗收敘述均為當時的歷史狀態。Windows 執行檔與原生視窗連續縮放驗收仍安排於 I2。
 
-## Performed checks
+環境：Unity 6000.3.25f1 Windows Editor、URP 17.3.0、Input System 1.20.0。日期：2026-11-05。基準：main `73ffede`，包含 M1 `85c767a`。
 
-- Clean compilation and Main Play Mode entry.
-- Editor API asset inspection: exactly four unique, nonempty IDs; complete name/icon/prefab references; identity root transforms; model bottom-centres at the root; enabled non-trigger child colliders. Instantiated collider bounds start at y=0 and have 1.5 m height (0.002 m tolerance). Cylinder and cone use convex colliders referencing their model meshes. Cone triangle winding points outward.
-- Runtime inspection: exactly four rows in the configured order; matching definition, label and icon; raycastable row backgrounds. Fifty consecutive UGUI pointer-click event dispatches each produced exactly one visibility transition. Disabling/re-enabling the component and Sidebar retained four rows and a single toggle response.
-- Actual desktop mouse clicks in the 1280 × 720 Game View expanded and collapsed the list through Input System. This is distinct from the event-dispatch checks.
-- Changed the actual Game View resolution during Play Mode to 1280 × 720, 1920 × 1080, 1024 × 768, 2560 × 1080 and 640 × 480. At each size checked Screen dimensions, toggle bounds, EventSystem raycast reachability, expand/collapse via UGUI events and positive viewport dimensions. Visually inspected correctly timed screenshots of the four rows at all five sizes.
-- At each size added sixteen temporary row copies, confirmed content exceeded the viewport, dispatched a UGUI scroll event and verified content moved. Removed all temporary copies and confirmed exactly four production rows remained. This was event simulation, not a physical wheel-input test.
-- Instantiated the four actual prefabs in a temporary Play Mode display and visually confirmed blue cube, orange sphere, green cylinder and purple cone with working materials. The display temporarily disabled terrain/camera fitting; exiting Play Mode discarded those changes. No model instances were saved into Main.
-- Temporary authoring/validation code, overflow rows and screenshots are excluded from delivery. A temporary validator namespace compile error was corrected before continuing. Initial screenshots taken during resolution changes were rejected and recaptured after the target frame settled; a first-frame model capture before shader compilation settled was also not used as material evidence.
+## 已交付
 
-## Self review
+- 四種底部置中的道具 prefab、四份對應 PropDefinition 資產、四個原創圖示、四份 URP 材質，以及本專案製作的封閉錐體網格。完整清單與尺寸見 README。
+- 可重用的 PropCatalogItem UI prefab，明確指定 Image／Text 參照，並提供綁定的 Definition 屬性，供後續指標處理使用。
+- Main Sidebar 明確參照已排序的定義、項目 prefab 與既有捲動內容。Awake 只建立一次項目；展開僅改變可見性。開關監聽器只註冊一次，並在銷毀時移除。
+- M1 地形、攝影機、輸入系統與可視區域排版不變。Main 的變更以資料參照取代空狀態，並更新標題文字。
 
-Reviewed all scripts, scene changes, data references, prefab transforms, collider ownership and shape, row layout/raycast targets, listener lifetime, repeated visibility changes, metadata and asset serialization. Replaced Unity's default cylinder CapsuleCollider with a matching convex MeshCollider to avoid inaccurate rounded picking. Cube and sphere retain their exact primitive colliders. The cone mesh is Unity text-serialized YAML; PNG icons use the existing Git LFS rules. No binary asset was subjected to YAML newline conversion. No third-party artwork was introduced.
+## 已執行檢查
 
-## Limits and manual acceptance
+- 編譯正常，成功進入 Main Play Mode。
+- Editor API 資產檢查：恰有四個唯一且非空的 ID；名稱／圖示／prefab 參照完整；根節點為單位變換；模型底部中心位於根節點；子碰撞器已啟用且不是 Trigger。實例化碰撞器的邊界從 y=0 開始，高 1.5 公尺（容差 0.002 公尺）。圓柱與錐體使用參照模型網格的凸面碰撞器；錐體三角形頂點順序朝外。
+- 執行期間檢查：依設定順序恰有四列，定義、標籤與圖示一致，背景可接受射線查詢。連續 50 次 UGUI 指標點擊事件各產生恰好一次可見狀態變化。停用／重新啟用元件及 Sidebar 後仍保留四列，開關僅回應一次。
+- 在 1280 × 720 Game View 以實際桌面滑鼠透過 Input System 展開／收合清單；這與事件呼叫檢查不同。
+- 在 Play Mode 將實際 Game View 解析度切換至 1280 × 720、1920 × 1080、1024 × 768、2560 × 1080、640 × 480。各尺寸均檢查 Screen 尺寸、開關邊界、EventSystem 射線可達性、UGUI 事件展開／收合，以及可視區域尺寸為正值，並檢視五個尺寸下時序正確的四列截圖。
+- 各尺寸加入 16 個暫時項目副本，確認內容超出可視區域，透過 UGUI 捲動事件確認內容移動。移除全部副本後確認僅剩四個正式項目。這是事件模擬，不是實際滾輪輸入測試。
+- 在暫時 Play Mode 展示中實例化四個實際 prefab，目視確認藍色方塊、橘色球體、綠色圓柱與紫色錐體及材質正常。展示期間暫時停用地形／攝影機取景，離開 Play Mode 後捨棄這些變更；未將模型實例存入 Main。
+- 暫時製作／驗證程式、溢出項目及截圖未納入交付。暫時驗證工具的命名空間編譯錯誤已修正後才繼續。解析度切換期間的初始截圖不採用，改於目標影格穩定後重拍；著色器編譯穩定前的第一幀模型截圖亦不作為材質證據。
 
-- The catalog is display-only. Drag preview, placement, selection, deletion and guides remain for later milestones. No placement or slope-alignment behavior is claimed by these prefab checks.
-- Definitions and row dependencies are authored in Inspector; runtime editing/rebuilding of the catalog is not supported in this milestone. No permanent test harness or validation menu is shipped.
-- Actual mouse input was checked at 1280 × 720. Other sizes and overflow scrolling used event dispatch plus geometry/raycast checks and screenshot inspection.
-- No desktop build, executable input or continuous native-window resize test was performed. These are deferred until the necessary features are complete.
-- Agent validation and cloud code review do not constitute user acceptance. Awaiting user manual acceptance.
+## 自行審查
 
-1. Open Main and enter Play Mode: the catalog starts collapsed, with no new Console errors.
-2. Click PROPS to open it: Cube, Sphere, Cylinder and Cone each show their own icon. Repeatedly close/open: exactly four rows remain.
-3. Switch Game View to the five sizes above: the toggle and rows remain reachable. Physical wheel scrolling can be checked by temporarily duplicating rows during Play Mode; exit Play Mode to discard those copies.
-4. Inspect each definition in Data/Props and its linked prefab/icon. Open prefabs: root transform is identity, child Model is at y=0.75, and its bottom is at local y=0. Collider shape matches the model; no Rigidbody is present.
-5. Exit Play Mode. Do not save temporary runtime verification changes. Desktop acceptance remains deferred.
+檢查全部腳本、場景變更、資料參照、prefab 變換、碰撞器歸屬與形狀、項目排版／射線目標、監聽器生命週期、重複可見性切換、metadata 與資產序列化。將 Unity 預設圓柱 CapsuleCollider 換成符合形狀的凸面 MeshCollider，避免圓角造成不精準的選取。方塊與球體保留準確的基本碰撞器。錐體網格為 Unity 文字序列化 YAML，PNG 圖示使用既有 Git LFS 規則，未對二進位資產執行 YAML 換行轉換。未加入第三方美術素材。
+
+## 當時的限制與人工驗收
+
+- 清單當時僅提供顯示；拖曳預覽、放置、選取、刪除及指引線屬後續里程碑。prefab 檢查不代表放置或斜坡對齊行為已驗證。
+- 道具定義與項目相依參照在 Inspector 設定；此里程碑不支援執行期間編輯／重建清單，亦未交付永久測試工具或驗證選單。
+- 實際滑鼠輸入僅檢查 1280 × 720；其他尺寸及溢出捲動使用事件呼叫、幾何／射線檢查與截圖檢視。
+- 未執行桌面建置、執行檔輸入或原生視窗連續縮放測試，留待必要功能完成。
+- 代理驗證與雲端程式審查不構成使用者驗收；此階段當時等待使用者人工驗收。
+
+1. 開啟 Main 並進入 Play Mode，清單初始收合，Console 無新增錯誤。
+2. 點 PROPS 展開，Cube、Sphere、Cylinder、Cone 各自顯示圖示；重複收合／展開後仍恰有四列。
+3. 將 Game View 切換至上述五個尺寸，開關與項目仍可操作。可在 Play Mode 暫時複製項目檢查實際滾輪捲動，離開 Play Mode 後捨棄副本。
+4. 檢查 Data/Props 每份定義及連結的 prefab／圖示。開啟 prefab，確認根節點為單位變換、Model 子物件位於 y=0.75，模型底部為 local y=0，碰撞器符合形狀且無 Rigidbody。
+5. 離開 Play Mode，不儲存暫時執行期驗證變更；當時桌面執行檔驗收仍延後執行。

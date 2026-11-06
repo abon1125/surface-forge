@@ -1,52 +1,58 @@
-# M4 validation
+# M4 驗證紀錄
 
-Environment: Unity 6000.3.25f1 Windows Editor, URP 17.3.0, Input System 1.20.0. Date: 2026-11-05. Baseline: main `0ec4d6c`, merged PR #4 including M3 `41a3bb0` and `0e032b8`. Remote fetch and main fast-forward were performed before creating `codex/prop-selection`. No package changes.
+歷史提交參照：本文件保留原 SHA 與驗證當時的事實；改寫後提交請查閱 [Git 歷史遷移紀錄](GitHistoryMigration.md)。測試 job ID 不是提交 SHA，保持原值。舊測試與審查結果仍對應原提交，不代表已在新 SHA 重跑。
 
-## Delivered behavior
+## 使用者驗收更新 — 2026-11-06
 
-- `PropSelectionController` explicitly references the scene camera, placement controller, menu, PlacedProp mask and 500 m ray distance. Child collider hits resolve their `PlacedProp` parent and retained Definition. Terrain/background clears selection; UI clicks preserve it. Only left-button clicks below the drag threshold qualify.
-- Input System Dynamic `onEvent` preserves the actual button-down position/UI ownership, latches movement across the event sequence and records the actual button-up position. Movement after release cannot move the click. LateUpdate records the candidate after UI Update; the next real player frame resolves it only after every release-frame UGUI Update and placement LateUpdate has finished. Placement exposes a gesture notification and consumed-frame stamp. Successful, cancelled and undelivered releases cannot also select. No reliance on ordering between the selection and placement components.
-- While the scene's single selection controller is enabled, it temporarily disables redundant mouse-event merging so a first press or out-and-back movement cannot be merged away before `onEvent`. It restores the original InputSettings value on disable/scene teardown, without saving project settings. This deliberately processes every mouse event while active, including high-frequency mice; only press/release perform UI raycasts in the event callback.
-- Both catalog placement and vertical-scroll gestures clear existing selection/menu. A scene press that crosses the drag threshold also clears it without selecting on release. Focus/pause loss, selection/menu disable, target disable/destruction and scene teardown clear references. Re-enabling starts empty. Event subscriptions and delete-button listeners are paired with lifecycle cleanup.
-- Main reuses the existing UGUI Canvas. The reusable menu component has explicit camera/canvas/panel/sidebar/name/button references. It projects the bottom anchor, offsets beside it, flips left when needed and clamps the complete panel inside padded canvas space before the sidebar. It follows target and camera/viewport changes, including the final canvas-render callback after camera LateUpdate. Behind-camera, clipped-depth and off-viewport anchors hide the panel. Very small available areas uniformly scale the panel; no selected target leaves a raycastable invisible panel.
-- Delete clears state before deactivating/destroying exactly the selected instance. Repeated button invocation before deferred destruction cannot delete another prop. Source prefabs, shared materials, catalog and other placed instances remain intact. No shared material is edited for selection; the named nearby menu identifies the selected object.
-- Editor-authored PlacedProp layer 9 is applied to the entire hierarchy of new formal instances. Source prefabs remain Default, previews remain Ignore Raycast with disabled colliders, and SurfacePlacementQuery still raycasts the explicitly assigned TerrainCollider directly. M1 terrain/camera and M2 assets are retained. No guides, XR, persistence or transform editing.
+使用者確認已在 Unity Editor Play Mode 人工測試桌面版，未發現問題。依此回報記錄為 Editor Play Mode 人工驗收完成；未另行回報個別情境、解析度或重複次數。以下待驗收敘述均為歷史狀態。此次回報不代表重新執行自動化測試或 Windows 執行檔測試；場景選單整合、完整邊界驗證與執行檔驗收仍安排於 I1–I2。
 
-## Verification record
+環境：Unity 6000.3.25f1 Windows Editor、URP 17.3.0、Input System 1.20.0。日期：2026-11-05。基準：main `0ec4d6c`，已合併 PR #4，包含 M3 `41a3bb0` 與 `0e032b8`。建立 `codex/prop-selection` 前已取得遠端更新並將 main 快轉。無套件變更。
 
-Permanent tests are under EditMode and enter Play Mode. M3 uses its isolated scene; M4 opens Main. Test mice are independent Input System devices; tests temporarily enable background execution and restore it. Frame waits require `Time.frameCount` to advance while requesting PlayerLoop updates; Editor ticks alone do not satisfy them.
+## 已交付行為
 
-- First complete run: 13/14 passed (job `d566ebc8`), including all eight M3 tests. The switching case failed because the original centred menu covered the second test target. Corrected menu placement to begin beside the object and flip before clamping; test targets are arranged outside the menu. This failed run is not recorded as a pass.
-- Pre-cloud complete runs: 15/15 passed, 0 failed/skipped (jobs `e5b76a16` and `6e3ef98a`, latter 195 seconds after temporary-tool removal), including all eight M3 tests. Self-review added clearing on a scene drag and an independent pending-press frame. These runs did not cover the later cloud finding's cross-position batch.
-- Cloud P2 was reproduced before fixing: the queued sidebar press -> held movement onto Cube -> release, processed by one real Dynamic PlayerLoop update, selected Cube incorrectly (job `28390569`). An initial manually forced InputSystem.Update fixture did not preserve edge flags through the following automatic update and was corrected; that initial fixture result is not accepted as the reproduction.
-- Post-fix complete suite: **17/17 passed, 0 failed/skipped** (job `6180d3e8`, 203 seconds), including all eight M3 regressions. Added batch UI-origin rejection, out-and-back drag rejection, genuine same-update click and post-release movement checks, plus 20 disable/re-enable cycles proving both initial event-merging settings are restored.
-- Latest-head re-review found a second valid P2: an older deferred click could reopen selection after a newer scene drag cleared it. Reproduced before fixing with Input System test-device input on the next real player frame, queued after the prior release's render (job `08cf138c`). The fix cancels both an older LateUpdate candidate and an earlier same-batch release when the newer gesture crosses the threshold. Regression also checks a fresh click still works. New fixture initially had a Canvas delegate compile error; corrected before accepted reproduction. The launch during that compile error failed restoration and is not a test pass. **Final full suite: 18/18 passed, 0 failed/skipped** (job `fa9ba9c4`, 244 seconds), including all eight M3 regressions. Latest code compiled cleanly (job `0df4411f`); the two transient delegate compiler messages remain historical, not current compile errors.
-- Actual Main Game View sizes: 1280 x 720, 1920 x 1080, 1024 x 768, 2560 x 1080 and 640 x 480 in one Play session. At each size moved the already selected runtime target to four corners, four edge midpoints and centre: 45/45 complete-menu bounds checks passed inside screen and before sidebar. Five behind-camera checks hid the panel, and moving back restored it. Checks read later real player frames after dimensions settled. Initial immediate resize snapshots were rejected; an over-dense polling attempt hit the API rate limit and was stopped. The settled, paced rerun supersedes those attempts. No product change was inferred from transitional snapshots or the API rate limit.
-- Visually inspected five complete Game View captures showing the populated catalog, terrain and named DELETE menu. This is visual inspection, not input evidence. Runtime target movement was temporary Editor validation, not a shipped transform-editing feature.
-- Actual desktop mouse at 1280 x 720 selected Cube, Sphere, Cylinder and Cone in sequence, displayed their matching names, retained selection on a catalog-row click, cleared on terrain, reselected Cone and deleted it. Read-back: 4 -> 3 props, null selection/target, hidden panel. At 640 x 480 an actual DELETE click removed the selected Cube: 3 -> 2 with null references and hidden panel. These props were initially seeded through M3 Begin/End API calls, not physical dragging.
-- After the cloud fix and 17/17 run, repeated actual 1280 x 720 desktop selection and DELETE on one original Cube prefab instance prepared through built-in Unity Skills APIs, with its Definition and both hierarchy layers explicitly set. The correct named menu appeared, flipped left near the sidebar and deletion removed the cube/hid the panel; read-back Selected was null. No new captured Console errors. Exiting Play Mode discarded the fixture; this was not a physical placement test.
-- Another actual desktop drag attempt from Cube row to valid terrain added nothing. The placement consumed-frame stamp remained at the seed frame (`683`), while the following snapshot was frame `44873`; no placement/scroll gesture notification was observed. The cause was not established. This does not pass the M3 actual-drag check, and does not establish whether the cause lies in the product or input delivery.
-- After temporary-tool/screenshot removal: clean compilation (job `7a20bab5`). After the final full suite, Main entered/exited Play Mode, was not compiling or paused, and including inactive objects had zero missing scripts/references. Captured Console error history still contained only three earlier M1/M2 entries (09:03/09:34 UTC), with no new M4 error entries.
+- `PropSelectionController` 明確參照場景攝影機、放置控制器、選單、PlacedProp 遮罩及 500 公尺射線距離。命中子碰撞器後解析其 `PlacedProp` 父節點與保留的 Definition。點地形／背景清除選取，點 UI 保留；僅接受未超過拖曳門檻的左鍵點擊。
+- Input System Dynamic `onEvent` 保存實際按下位置／UI 擁有權，在事件序列中記住移動狀態，並記錄實際放開位置；放開後移動不能改變該點擊。LateUpdate 在 UI Update 後記錄候選，下一個實際 PlayerLoop 影格才處理，確保放開當幀所有 UGUI Update 與放置 LateUpdate 已完成。放置提供手勢通知與已消耗影格記號，成功、取消或未送達的放開都不能同時選取，不依賴選取與放置元件順序。
+- 場景唯一選取控制器啟用時暫停冗餘滑鼠事件合併，避免首次按下或移出再返回的移動在 `onEvent` 前被合併；停用／場景卸載時還原原本 InputSettings，不儲存專案設定。啟用期間刻意處理每筆滑鼠事件，包括高頻滑鼠；事件回呼中只有按下／放開執行 UI 射線查詢。
+- 清單放置與垂直捲動手勢皆清除既有選取／選單；場景按下後移動超過門檻也會清除，放開不選取。失焦／暫停、選取元件／選單停用、目標停用／銷毀，以及場景卸載均清除參照，重新啟用為空狀態。事件訂閱與刪除按鈕監聽器隨生命週期成對清理。
+- Main 重用既有 UGUI Canvas。可重用選單明確參照攝影機／畫布／面板／側欄／名稱／按鈕。將底部錨點投影至畫布後偏移至物件旁，必要時翻到左側，再把完整面板限制於側欄前方且保留內距的畫布範圍。跟隨目標、攝影機／可視區域變更，包含攝影機 LateUpdate 後最後的畫布渲染回呼。錨點在攝影機後方、深度被裁切或可視區域外時隱藏。可用空間過小時等比例縮放；無選取目標時不留下可攔截射線的隱形面板。
+- 刪除先清除狀態，再停用／銷毀唯一選取實例。延後銷毀前重複呼叫按鈕不會刪除其他道具。來源 prefab、共用材質、清單及其他已放置實例不變。選取不修改共用材質，以物件旁具名選單識別目標。
+- Editor 設定的 PlacedProp layer 9 套用至新正式實例的完整階層。來源 prefab 維持 Default；預覽維持 Ignore Raycast 且碰撞器停用；SurfacePlacementQuery 仍直接查詢明確指定的 TerrainCollider。保留 M1 地形／攝影機與 M2 資產，不加入指引線、XR、保存或變換編輯。
 
-M4 regression coverage includes all four real prefab child colliders and names, 50 select/switch/clear/reselect/delete cycles with object-count checks, UI sidebar retention and delete-button input pipeline, same-frame UI disappearance, successful/cancelled placement-release suppression followed by a fresh click, scene drag/right-button rejection, target disable/destruction, focus and component interruptions, repeated listener enable/disable, exactly-once deletion, menu following/clamping and behind-camera hiding.
+## 驗證紀錄
 
-## Self review and cloud review
+永久測試列於 EditMode 並進入 Play Mode。M3 使用隔離場景，M4 開啟 Main。測試滑鼠是獨立 Input System 裝置，測試暫時允許背景執行並於結束時還原。等待影格時須在要求 PlayerLoop 更新的同時確認 `Time.frameCount` 前進，僅 Editor tick 不算符合條件。
 
-Self review covers explicit bindings, collider ownership and layers, UI raycasts before and after release, asynchronous destruction, shared assets, gesture arbitration, listener cleanup, target invalidation and final camera/canvas positioning. No binary assets receive YAML line-ending conversion. The existing `.vscode/`, SceneTemplateSettings and legacy LFS stash are excluded. Temporary Unity Skills author/validation tools use prefixed discovered schemas and dry-run; they are removed before delivery.
+- 首次完整測試：13/14 通過（job `d566ebc8`），包含全部八項 M3 測試。切換案例因原本置中選單遮住第二個測試目標而失敗。已將選單起點改到物件旁，先翻側再限制邊界，並把測試目標配置於選單外；失敗批次不列為通過。
+- 雲端審查前的完整測試：15/15 通過，零失敗／略過（jobs `e5b76a16`、`6e3ef98a`；後者於暫時工具移除後 195 秒），包含全部八項 M3 測試。自行審查加入場景拖曳清除及獨立待處理按下影格。這些批次尚未涵蓋後續雲端發現的跨位置批次輸入。
+- 修正前已重現雲端 P2：側欄按下 → 按住移至 Cube → 放開的佇列，在一次實際 Dynamic PlayerLoop 更新中處理時錯選 Cube（job `28390569`）。最初手動強制 InputSystem.Update 的測試未能將按鍵邊緣旗標保留至下一次自動更新，已修正；該初始結果不視為重現證據。
+- 修正後完整測試：**17/17 通過，零失敗／略過**（job `6180d3e8`，203 秒），包含全部八項 M3 回歸。新增批次 UI 來源拒絕、移出再返回拖曳拒絕、真正同次更新點擊、放開後移動，以及 20 次停用／重新啟用循環，確認兩種初始事件合併設定均正確還原。
+- 最新提交再次審查發現第二項有效 P2：較舊延後點擊可能在新場景拖曳清除選取後重開選單。已在修正前使用 Input System 測試裝置，於前次放開的渲染後、下一個實際 PlayerLoop 影格排入輸入重現（job `08cf138c`）。修正在新手勢超過門檻時取消舊 LateUpdate 候選及同批較早的放開；回歸亦檢查新點擊仍正常。新測試最初有 Canvas delegate 編譯錯誤，已在有效重現前修正；編譯錯誤期間啟動的測試未能還原狀態，不列為通過。**最終完整測試：18/18 通過，零失敗／略過**（job `fa9ba9c4`，244 秒），包含全部八項 M3 回歸。最新程式編譯正常（job `0df4411f`）；兩則暫時 delegate 編譯訊息屬歷史，不是目前錯誤。
+- 同一次 Play session 的實際 Main Game View 為 1280 x 720、1920 x 1080、1024 x 768、2560 x 1080、640 x 480。各尺寸將已選取的執行期目標移到四角、四邊中點與中央，共 45/45 次完整選單邊界檢查通過，均在螢幕內、側欄前方。五次攝影機後方檢查均隱藏面板，移回後恢復。檢查在尺寸穩定後的後續實際影格讀取。最初立即縮放快照不採用，過密輪詢觸及 API 限流後已停止；後續以穩定尺寸及適當間隔重測取代，不從過渡快照或限流推論產品需修改。
+- 檢視五張完整 Game View 畫面，包含清單、地形與具名 DELETE 選單。這是視覺檢查，不是輸入證據；執行期目標移動僅用於暫時 Editor 驗證，不是交付的變換編輯功能。
+- 1280 x 720 實際桌面滑鼠依序選取 Cube、Sphere、Cylinder、Cone，顯示對應名稱，點清單列保留選取，點地形清除，再選取並刪除 Cone。讀回數量 4 → 3，選取／目標為空且面板隱藏。640 x 480 實際 DELETE 刪除所選 Cube：3 → 2，參照為空且面板隱藏。這些物件最初透過 M3 Begin／End API 建立，不是實際拖曳。
+- 雲端修正與 17/17 測試後，再於 1280 x 720 以實際桌面滑鼠選取／DELETE 一個透過內建 Unity Skills API 準備的原始 Cube prefab 實例，明確設定 Definition 及兩層階層 layer。正確名稱選單出現，靠側欄時翻至左側，刪除移除方塊並隱藏面板；讀回 Selected 為空。無新增擷取到的 Console 錯誤。離開 Play Mode 後捨棄測試配置，這不是實際放置測試。
+- 再次從 Cube 項目實際桌面拖至合法地形仍未新增道具。放置已消耗影格記號維持建立測試物件時的影格（`683`），後續快照為影格 `44873`，未觀察到放置／捲動手勢通知。原因未確認，不算 M3 實際拖曳通過，也無法判定原因在產品或輸入傳送。
+- 移除暫時工具／截圖後編譯正常（job `7a20bab5`）。最終完整測試後，Main 可進出 Play Mode，未處於編譯或暫停狀態，含未啟用物件皆無遺失腳本／參照。擷取的 Console 錯誤歷史仍只有三則早期 M1／M2 訊息（09:03／09:34 UTC），無新增 M4 錯誤。
 
-Initial cloud review completed for `86a6c20` and raised one valid P2: end-of-update position lost the actual press origin when press/movement/release shared a Dynamic update. Fixed in `58d6350`. Re-review of that head found the newer-drag/older-click P2 described above; it is addressed separately with reproduction and regression. Head-specific final re-review results are tracked in the M4 PR discussion and description. Pending, failed or unavailable review is not a pass. PR merge remains the user's action.
+M4 回歸涵蓋四種實際 prefab 的子碰撞器與名稱、50 次選取／切換／清除／重新選取／刪除及數量檢查、UI 側欄保留與刪除按鈕輸入流程、同幀 UI 消失、成功／取消放置放開抑制及後續新點擊、場景拖曳／右鍵拒絕、目標停用／銷毀、失焦與元件中斷、重複監聽器啟用／停用、只刪除一次、選單跟隨／邊界限制／攝影機後方隱藏。
 
-## Limits and manual acceptance
+## 自行審查與雲端審查
 
-Status: awaiting user manual acceptance after PR/review completion. Automated tests, simulated UGUI, screenshots and cloud review do not constitute user acceptance.
+自行審查涵蓋明確綁定、碰撞器歸屬與 layer、放開前後 UI 射線、非同步銷毀、共用資產、手勢協調、監聽器清理、目標失效及最終攝影機／畫布定位。二進位資產未執行 YAML 換行轉換。既有 `.vscode/`、SceneTemplateSettings 與舊 LFS stash 排除。暫時 Unity Skills 製作／驗證工具使用帶前綴且已查詢的 schema 並先 dry-run，交付前已移除。
 
-M3's outstanding actual-input checks remain: all four shapes dragged through high/low/slope/inside-edge locations with continuous preview observation; held-button Escape/focus interruption; leaving the window, releasing and returning; physical scrolling. Earlier desktop drag attempts did not deliver a placement Begin, and their cause was not established. Do not classify that evidence as a product defect or a tool limitation without further evidence.
+最初對 `86a6c20` 的雲端審查提出有效 P2：按下／移動／放開在同次 Dynamic 更新時，更新結束位置取代了實際按下來源。已於 `58d6350` 修正；再次審查該提交發現上述新拖曳／舊點擊 P2，已另行重現、修正並加入回歸。各提交最終再次審查結果追蹤於 M4 PR 討論與描述；待執行、失敗或無法取得的審查不算通過，PR 合併由使用者操作。
 
-1. Open Main, enter Play Mode, open PROPS and horizontally drag each of the four shapes onto terrain. A legal release creates one prop and leaves no selection/menu; cancellation adds none and also leaves no selection.
-2. Click each placed model: the matching name and DELETE appear nearby. Click another visible model to switch. Click terrain or scene background to clear, then click a model again to reselect.
-3. With a target selected, click sidebar/list/toggle and the menu background. They must not select or clear anything behind them. Click DELETE: only that target disappears, the menu closes and another collider behind the button is not selected or removed.
-4. Select near all viewport edges/corners. Change Game View between 1280 x 720, 1920 x 1080, 1024 x 768, 2560 x 1080 and 640 x 480. Full menu and delete button stay inside the workspace, left of the sidebar; target movement/camera changes update the position. A target behind the camera hides the menu safely.
-5. Start a new placement or vertical catalog drag: the old selection closes immediately. Release successfully or cancel: that release must not select/clear a scene prop. Quickly click a model and immediately start a scene drag: the old deferred click must not reopen the menu. A fresh left click selects normally. Test focus changes and disable/re-enable; no stale selection or duplicate delete response may remain.
-6. Repeat selection/switch/clear/delete and interruptions at least 50 times, checking object counts and Console. Exit Play Mode without saving temporary runtime changes.
+## 當時的限制與人工驗收
 
-Desktop build/executable and continuous native-window resizing acceptance are deferred until required features are complete; they do not block this milestone.
+當時狀態：PR／審查完成後仍等待使用者人工驗收。自動化測試、模擬 UGUI、截圖與雲端審查不構成使用者驗收；最新狀態見文件上方 2026-11-06 更新。
+
+M3 當時尚待實際輸入檢查：四種形狀在高／低／斜坡／邊界內拖曳與連續預覽、按住時 Esc／失焦中斷、離開視窗後放開再返回，以及實際捲動。先前桌面拖曳未送達放置 Begin，原因未確認，不得在缺少進一步證據時認定是產品缺陷或工具限制。
+
+1. 開啟 Main，進入 Play Mode，展開 PROPS，將四種形狀各自水平拖至地形。合法放開建立一個道具且無選取／選單；取消不新增且無選取。
+2. 點擊各已放置模型，顯示對應名稱及 DELETE；點另一可見模型切換，點地形或背景清除，再點模型重新選取。
+3. 有選取目標時點側欄／清單／開關及選單背景，不得選取或清除後方物件。點 DELETE 只移除該目標並關閉選單，不選取或移除按鈕後方的其他碰撞器。
+4. 在各可視區域邊緣／角落選取，切換 Game View 1280 x 720、1920 x 1080、1024 x 768、2560 x 1080、640 x 480。完整選單與刪除按鈕保持在工作區、側欄左方，目標／攝影機變更後定位更新，攝影機後方目標安全隱藏。
+5. 開始新放置或垂直清單拖曳，舊選取立即關閉；成功或取消放開不得選取／清除場景道具。快速點模型後立刻開始場景拖曳，舊延後點擊不得重開選單；新左鍵點擊仍正常。測試切換焦點、停用／重新啟用，不得殘留選取或重複刪除回應。
+6. 重複選取／切換／清除／刪除與中斷至少 50 次，檢查物件數與 Console。離開 Play Mode，不儲存暫時執行期變更。
+
+桌面建置／執行檔及原生視窗連續縮放驗收當時延後至必要功能完成，不阻擋本里程碑。
