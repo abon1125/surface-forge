@@ -8,7 +8,7 @@
 
 最終交付為單一 Windows App：啟動後由場景選單選擇桌面版或 VR 鍵鼠模擬版進行驗收，並可返回選單。先完成桌面 M1–M4 與獨立 VR 模擬場景，再實作選單及整合驗收。交付包含執行檔、實際執行錄影、公開儲存庫連結及可回溯的階段提交紀錄。
 
-VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3–S5 互動、選單與建置尚未完成。
+VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4–S5、選單與建置尚未完成。
 
 ## 2. 專案基準與設計決策
 
@@ -211,7 +211,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 | 公開儲存庫與初始推送 | 已建立，保留 M1–M4 與文件 PR 的開發歷程 |
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
 | 指引線 | 待實作與驗證；已移至 VR 模擬 S4 |
-| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3–S5 待實作與驗證 |
+| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3 已實作（技術驗證見 S3Validation，待使用者精準度與舒適度確認）；S4–S5 待實作與驗證 |
 | 場景選單 | 兩版完成後於 I1 實作 |
 | XR | 選配，待確認設備與時間 |
 | 整合建置與完整驗收 | 待執行；原 M6 延後至 I2 |
@@ -241,3 +241,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 ### S2 使用者確認與 PR 交付（2026-11-06）
 
 使用者於動畫提交 fb5727a 後回報「測試 ok」，並要求提交 PR 及審查；記錄為 S2（含動畫）的使用者整體測試確認，不推定未回報的逐項案例、原生焦點、比例縮放、次數、Windows 或 XR 覆蓋範圍。此補記更新目前人工確認狀態，保留初次交付時待確認的歷史敘述；本次文件更新不重跑 Unity 測試。PR 審查依 AGENT.md 請求 GitHub Codex Review 並追蹤最新 head，沒有合併或開始 S3 的授權。
+
+### S3 執行狀態（2026-11-06）
+
+重新 fetch 確認 PR #13 合併後 origin/main 為 dd90baf，再從同步的 main 建立 codex/vr-simulation-s3。實作右球世界射線、有限距離與命中回饋、UI 距離遮擋及專用輸入模組；清單具有 viewport／content／ScrollRect，點選只回饋四種既有 PropDefinition ID，不建立三維道具。展開完成才接受操作，收合要求即取消；保留 S1 參數與 S2 短按／反向動畫防護。詳細證據、診斷及未測範圍見 [S3 驗證紀錄](S3Validation.md)。尚未獲使用者對射線精準度及操作舒適度的人工確認；S4–S5 與場景選單未開始，本次僅本機提交，不推送或建立 PR。S0–S2 上述歷史記錄與 job 不視為本次重跑。

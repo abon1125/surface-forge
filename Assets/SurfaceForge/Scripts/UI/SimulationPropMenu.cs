@@ -29,6 +29,7 @@ namespace SurfaceForge.UI
         private bool requireTabRelease = true;
         // 代表目標狀態；收回期間 Canvas 仍保持有效，直到動畫完成。
         public bool IsExpanded => expanded;
+        public bool IsInteractive => isActiveAndEnabled && expanded && progress >= 1 && panel && panel.activeInHierarchy;
 
         private void OnEnable() { requireTabRelease = true; Close(); }
         private void OnDisable() { requireTabRelease = true; Close(); }
@@ -59,7 +60,12 @@ namespace SurfaceForge.UI
         {
             if (!panel) return;
             if (!canvasGroup) canvasGroup = panel.GetComponent<CanvasGroup>();
-            if (canvasGroup) canvasGroup.alpha = progress;
+            if (canvasGroup)
+            {
+                canvasGroup.alpha = progress;
+                canvasGroup.interactable = IsInteractive;
+                canvasGroup.blocksRaycasts = panel.activeInHierarchy && progress > 0.001f;
+            }
             var rect = (RectTransform)panel.transform;
             rect.sizeDelta = panelSize;
             rect.localPosition = transform.InverseTransformPoint(transform.parent.position) * (1 - progress);

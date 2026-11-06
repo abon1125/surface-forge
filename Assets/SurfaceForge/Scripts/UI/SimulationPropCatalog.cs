@@ -16,7 +16,7 @@ namespace SurfaceForge.UI
                 return;
             }
             for (int i = 0; i < items.Length; i++) items[i].Bind(definitions[i]);
-            foreach (var graphic in GetComponentsInChildren<Graphic>(true)) graphic.raycastTarget = false;
+            // S3 射線目標由場景明確配置：項目、viewport 與背景；不再覆寫。
         }
     }
 }
