@@ -8,7 +8,7 @@
 
 最終交付為單一 Windows App：啟動後由場景選單選擇桌面版或 VR 鍵鼠模擬版進行驗收，並可返回選單。先完成桌面 M1–M4 與獨立 VR 模擬場景，再實作選單及整合驗收。交付包含執行檔、實際執行錄影、公開儲存庫連結及可回溯的階段提交紀錄。
 
-VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。本次規劃不代表新場景、選單或建置已完成。
+VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景與地形副本已完成 Editor 基本檢查；後續互動、選單與建置尚未完成。
 
 ## 2. 專案基準與設計決策
 
@@ -132,7 +132,9 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 
 若已有提交或遠端，先檢查現況再沿用，不重建、不刪除歷史。公開前核對授權與敏感資訊；第三方工具或資產需可合法公開散布。
 
-### 本次文件 PR 與 VR 開發銜接
+### 文件 PR 與 VR 開發銜接（歷史流程）
+
+2026-11-06 更新：下列文件 PR 流程已完成，PR #8 已合併；目前 S0 執行狀態見第 10 節。
 
 1. 在 `codex/vr-simulation-plan` 完成文件差異檢查，提交規劃與桌面 Play Mode 人工驗收紀錄；取得推送授權後推送，對 `main` 建立文件 PR。僅納入本次文件，排除原有 Unity 設定等無關變更。
 2. 檢查 PR 的規劃、驗收紀錄及差異，完成合併後才接續 VR 功能開發；不重開已合併的 `codex/development-docs` PR。
@@ -201,12 +203,16 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 
 | 項目 | 狀態 |
 | --- | --- |
-| 開發規格與代理規範 | 已更新；本次文件分支待 PR 審查與合併 |
+| 開發規格與代理規範 | 文件 PR #8 已合併；已同步 S0 實作與檢查狀態 |
 | 公開儲存庫與初始推送 | 已建立，保留 M1–M4 與文件 PR 的開發歷程 |
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
 | 指引線 | 待實作與驗證；已移至 VR 模擬 S4 |
-| VR 模擬場景 | 待實作與驗證；獨立場景及 TerrainData |
+| VR 模擬場景 | S0 獨立場景與 TerrainData 已實作並完成 Editor 基本檢查；S1–S5 待實作與驗證 |
 | 場景選單 | 兩版完成後於 I1 實作 |
 | XR | 選配，待確認設備與時間 |
 | 整合建置與完整驗收 | 待執行；原 M6 延後至 I2 |
 | 錄影、上傳與連結 | 待執行 |
+
+### S0 執行狀態（2026-11-06）
+
+已從更新後的 main（`d1d5f49`，PR #8）建立 `codex/vr-simulation`，完成獨立 `VRSimulation.unity` 與 `VRSimulationTerrain.asset`。場景僅有地形、燈光、固定暫時攝影機／AudioListener 與 EventSystem；已檢查獨立 Play Mode、磁碟重載、碰撞命中及資產參照。Main、桌面地形、啟動設定及既有未提交設定未變更。詳細結果與限制見 [S0 驗證紀錄](S0Validation.md)。本次只建立本機提交，不推送或建立 PR。S1 角色貼地、碰撞與移動邊界仍須先確認，S1–S5、場景選單與 Windows 建置均未實作。

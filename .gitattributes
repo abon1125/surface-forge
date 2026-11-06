@@ -172,3 +172,4 @@ LightingData.asset     binary
 
 # TerrainData is binary even when Editor serialization uses text.
 Assets/SurfaceForge/Terrain/WorkspaceTerrain.asset lfs -linguist-language
+Assets/SurfaceForge/Terrain/VRSimulationTerrain.asset lfs -linguist-language
