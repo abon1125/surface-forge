@@ -1,5 +1,7 @@
 # M4 validation
 
+歷史提交參照：本文件保留原 SHA 與驗證當時的敘述；改寫後提交請查閱 [Git 歷史遷移紀錄](GitHistoryMigration.md)。測試 job ID 不是提交 SHA，保持原值。舊測試與審查結果仍對應原提交，不代表已在新 SHA 重跑。
+
 ## User acceptance update — 2026-11-06
 
 The user confirmed desktop manual testing in Unity Editor Play Mode with no issues found. Editor Play Mode manual acceptance is recorded as complete based on that report; individual scenarios, resolutions and repetition counts were not separately reported. Earlier pending-acceptance statements below are historical. This report does not claim a new automated test run or Windows executable test. Scene-menu integration, complete boundary validation and executable acceptance remain scheduled for I1–I2.
