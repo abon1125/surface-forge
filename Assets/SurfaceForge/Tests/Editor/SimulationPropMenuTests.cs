@@ -153,7 +153,7 @@ namespace SurfaceForge.Tests
             }
             Assert.That(panel.GetComponentsInChildren<PropItemDragHandler>(true),Is.Empty);
             Assert.That(panel.GetComponentsInChildren<GraphicRaycaster>(true),Is.Empty);
-            Assert.That(panel.GetComponentsInChildren<Graphic>(true).All(g=>!g.raycastTarget),Is.True);
+            Assert.That(panel.GetComponentsInChildren<SimulationPropItem>(true).Length,Is.EqualTo(4));
             var ids=items.Select(i=>i.GetInstanceID()).ToArray();
             for(int i=0;i<12;i++){yield return Keys();yield return Keys(Key.Tab);}
             Assert.That(menu.IsExpanded,Is.True);

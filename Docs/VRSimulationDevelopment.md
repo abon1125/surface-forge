@@ -2,7 +2,7 @@
 
 日期：2026-11-06
 
-狀態：2026-11-06 已完成 S0 與 S1 角色／移動實作及 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試因場景無陡坡而略過），S2 左球面板已實作，技術驗證與人工驗收狀態見 [S2 驗證紀錄](S2Validation.md)；S3–S5 與 I1–I2 仍為後續規劃。詳見 [S0 驗證紀錄](S0Validation.md)及 [S1 驗證紀錄](S1Validation.md)。
+狀態：2026-11-06 已完成 S0 與 S1 角色／移動實作及 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試因場景無陡坡而略過），S2 左球面板已實作，技術驗證與人工驗收狀態見 [S2 驗證紀錄](S2Validation.md)；S3 射線與 UI 路由已實作，技術結果與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4–S5 與 I1–I2 仍為後續規劃。詳見 [S0 驗證紀錄](S0Validation.md)及 [S1 驗證紀錄](S1Validation.md)。
 
 ## 1. 目標與範圍
 
@@ -124,6 +124,18 @@ IsExpanded 表示目標開關狀態，收回期間 Canvas 仍有效但依舊不�
 
 UI 與場景命中需依距離及遮擋規則比較，不能讓面板穿過前景物件接受點擊。放置查詢則維持既有專用 Surface 規則，預覽與已放置道具不遮擋地形落點查詢。
 
+### S3 實作決策（2026-11-06）
+
+- SimulationWorldRaycaster 明確指定 Camera、RightController/RayOrigin、忽略的角色根節點、Canvas、sceneMask 與 maxDistance。預設距離 100 m、遮罩排除 Ignore Raycast；另外排除角色階層的碰撞器，專用射線視覺沒有碰撞器。RayOrigin 位於右球前表面（本地 Z=0.5，繼承球尺寸後為 0.06 m），不改 S1 球設定。
+- 攝影機射線先查詢 UI 與場景取得參考點，無命中採 100 m；再從 RayOrigin 朝參考點建立實際 Ray，重新查詢世界平面交點、Graphic 矩形、UGUI mask/filter 及場景距離。較近或同距離的場景碰撞器優先，空白背景仍阻擋。LineRenderer 寬 0.003 m、命中球直徑 0.016 m，使用專用 SimulationRay 材質；無命中延伸到有限距離並隱藏標記。
+- VR 的 InputSystemUIInputModule 停用，既有 EventSystem 保留，SimulationRayInputModule 是唯一有效模組，不派送 navigation、submit 或拖曳。LateUpdate 在角色移動與面板跟隨後查詢；hover／down／up／click 使用同一實際 Ray 結果。項目 hover 藍色、press 橘色、click 綠色 0.3 秒，提示顯示 CLICK: 穩定 ID；僅記錄既有 Definition，不建立任何道具。
+- S3 取代 S2 的純顯示設定：SimulationPropCatalog.Awake 只 Bind，不再覆寫 Graphic.raycastTarget。場景只讓面板背景、viewport、四個項目背景接受查詢；圖示與文字不接收。沒有 GraphicRaycaster 或桌面手勢元件。CanvasGroup 的 alpha／interactable／blocksRaycasts 由 SimulationPropMenu 管理。
+- IsExpanded 仍為目標；IsInteractive 要求元件啟用、目標展開、progress 到達 1 且 Canvas 有效。收合要求當影格立即取消操作；開合途中可見背景保留遮擋，但不接收新操作。原 S2 wasPressedThisFrame、快速反向及失焦後 Tab release 防護保持。
+- viewport 332×288 px，content 332×288 px；四列每列 72 px，項目高 66 px。ScrollRect 垂直、Clamped、無慣性，scrollSensitivity=24；使用者試玩後將 Wheel Units Per Step 設為 3（目前場景設定），滾輪輸入先除以 3；四項預設無溢出。滾輪只有實際命中 viewport 或其可見子項且面板可互動時派送，不送拖曳。
+- 右鍵觀看期間停止瞄準與全部 UI 按鍵／滾輪派送，隱藏射線及清除命中，不接管 S1 游標。失焦、暫停、離開有效 Game View、停用、收合或卸載會送取消用 pointerUp、清除 hover／press；中斷後需觀察左鍵放開才能開始新操作。Editor 另外要求 focusedWindow 與 mouseOverWindow 均為 GameView，不能以 Inspector／Scene View 的滑鼠取得操作。
+
+S3 測試區分 Input System 測試裝置、直接世界射線查詢、生命週期回呼與原生 Game View 操作，詳見 [S3Validation](S3Validation.md)。本階段不含拖曳擁有權、預覽、放置、指引線、選取刪除或場景選單；第 7–8 節的相關內容仍為 S4–S5 規劃。
+
 ## 7. 道具放置與選取流程
 
 ### 放置
@@ -174,7 +186,7 @@ UI 與場景命中需依距離及遮擋規則比較，不能讓面板穿過前�
 | S0 | 獨立場景、地形副本與場景參照 | 已實作並完成 Editor 基本檢查；獨立啟動與 TerrainData 參照隔離，詳見 S0 驗證紀錄 |
 | S1 | 膠囊、雙球、第一人稱攝影機與移動 | 已實作及完成 Editor 自動測試、構圖檢查；使用者已確認 Editor Play Mode 操作正常，陡坡人工測試略過，詳見 S1 驗證紀錄 |
 | S2 | 左球面板與 Tab 開關 | 已實作初始收合、Tab／Esc 與四種道具呈現；使用者已回報含動畫的測試 OK（未另列逐項案例），詳見 S2 驗證紀錄 |
-| S3 | 右球射線與 UI 路由 | 可指向、點選、捲動，無 UI 穿透 |
+| S3 | 右球射線與 UI 路由 | 已實作；技術結果與限制見 S3Validation，待使用者確認精準度與舒適度 |
 | S4 | 射線放置、共用核心、指引線與落點標記 | 承接原 M5；可重複拖出、預覽、放置與取消，指引正確清理，桌面功能無退化 |
 | S5 | 射線選取與刪除 | 可切換目標，刪除只影響該實例 |
 | I1 | 兩版完成後加入啟動場景選單與返回入口 | 單一 App 可選擇驗收場景，返回及重新進入狀態正確 |
