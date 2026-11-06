@@ -12,14 +12,21 @@ namespace SurfaceForge
 
         public Ray PointerRay(Vector2 position) => sceneCamera.ScreenPointToRay(position);
         public Vector3 InvalidPosition(Vector2 position) => PointerRay(position).GetPoint(invalidDepth);
+        public Vector3 InvalidPosition(Ray ray) => ray.GetPoint(invalidDepth);
 
         public bool TryGetPose(Vector2 position, out Pose pose)
         {
             pose = default;
-            if (!sceneCamera || !surface || !surface.enabled || !surface.gameObject.activeInHierarchy ||
+            return sceneCamera && TryGetPose(PointerRay(position), out pose);
+        }
+
+        public bool TryGetPose(Ray ray, out Pose pose)
+        {
+            pose = default;
+            if (!surface || !surface.enabled || !surface.gameObject.activeInHierarchy ||
                 (surfaceMask.value & (1 << surface.gameObject.layer)) == 0) return false;
             // Raycast the explicitly assigned collider, so props can never occlude the surface.
-            if (!surface.Raycast(PointerRay(position), out var hit, maxDistance)) return false;
+            if (!surface.Raycast(ray, out var hit, maxDistance)) return false;
             pose = PoseAt(hit.point, hit.normal);
             return true;
         }

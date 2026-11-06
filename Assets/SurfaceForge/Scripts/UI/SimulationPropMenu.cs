@@ -10,6 +10,7 @@ namespace SurfaceForge.UI
         [Header("明確場景參照")]
         [SerializeField] private GameObject panel;
         [SerializeField] private Transform viewer;
+        [SerializeField] private PlacementController placement;
         [Header("相對左球的世界公尺與畫布尺寸")]
         [SerializeField] private Vector3 anchorOffset = new Vector3(0, 0.29f, 0.15f);
         [SerializeField] private Vector2 panelSize = new Vector2(380, 380);
@@ -36,7 +37,7 @@ namespace SurfaceForge.UI
         private void OnApplicationFocus(bool value) { focused = value; requireTabRelease = true; if (!value) Snap(expanded); }
         private void OnApplicationPause(bool value) { if (value) { requireTabRelease = true; Snap(expanded); } }
         private void OnDestroy() { KillTransition(); }
-        private void Close() { Snap(false); }
+        private void Close() { if (placement) placement.Cancel(); Snap(false); }
         private void KillTransition() { transition?.Kill(); transition = null; }
         private void Snap(bool value)
         {
@@ -47,6 +48,7 @@ namespace SurfaceForge.UI
         private void SetExpanded(bool value)
         {
             if (!panel || expanded == value) return;
+            if (!value && placement) placement.Cancel();
             KillTransition(); expanded = value; panel.SetActive(true); ApplyVisual();
             float target = value ? 1 : 0;
             float duration = (value ? openDuration : closeDuration) * Mathf.Abs(target - progress);
@@ -82,7 +84,11 @@ namespace SurfaceForge.UI
             }
             // 保留兩次 Update 間的短按，以及放開後再次按下的事件。
             else if (keyboard.tabKey.wasPressedThisFrame) SetExpanded(!expanded);
-            if (keyboard.escapeKey.wasPressedThisFrame) SetExpanded(false);
+            if (keyboard.escapeKey.wasPressedThisFrame)
+            {
+                if (placement && placement.IsDragging) placement.Cancel();
+                else SetExpanded(false);
+            }
         }
         private void LateUpdate()
         {

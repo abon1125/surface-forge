@@ -38,6 +38,15 @@ namespace SurfaceForge
         private float pitch, verticalSpeed;
         private bool focused = true, requireRelease = true;
         public bool IsLooking { get; private set; }
+        public event System.Action Unavailable;
+        public bool PlacementOwnsInput { get; private set; }
+        public void SetPlacementInput(bool owned)
+        {
+            PlacementOwnsInput = owned;
+            // 放置期間按下的右鍵不能在放置結束後自動接管。
+            if (owned || (Mouse.current?.rightButton.isPressed ?? false)) requireRelease = true;
+            if (owned) EndLook();
+        }
 
         private void Awake()
         {
@@ -83,7 +92,8 @@ namespace SurfaceForge
             bool held = mouse != null && mouse.rightButton.isPressed;
             if (!held) { requireRelease = false; EndLook(); }
             if (!focused || !Application.isFocused) { Interrupt(); return; }
-            if (mouse != null && mouse.rightButton.wasPressedThisFrame && !requireRelease && InViewport(mouse.position.ReadValue()))
+            if (PlacementOwnsInput && held) requireRelease = true;
+            if (!PlacementOwnsInput && mouse != null && mouse.rightButton.wasPressedThisFrame && !requireRelease && InViewport(mouse.position.ReadValue()))
             {
                 IsLooking = true;
                 Cursor.lockState = CursorLockMode.Locked;
@@ -166,7 +176,7 @@ namespace SurfaceForge
         private void Interrupt() { requireRelease = true; EndLook(); }
         private void OnApplicationFocus(bool value) { focused = value; if (!value) Interrupt(); }
         private void OnApplicationPause(bool value) { if (value) Interrupt(); }
-        private void OnDisable() { Interrupt(); }
+        private void OnDisable() { Unavailable?.Invoke(); Interrupt(); }
         private void OnDestroy() { Interrupt(); }
     }
 }

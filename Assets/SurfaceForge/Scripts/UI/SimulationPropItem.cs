@@ -16,6 +16,7 @@ namespace SurfaceForge.UI
         public int ClickCount { get; private set; }
         public bool IsHovered => hovered;
         public bool IsPressed => pressed;
+        public event System.Action Unavailable;
         public void OnPointerEnter(PointerEventData data) { hovered = true; Paint(); }
         public void OnPointerExit(PointerEventData data) { hovered = false; Paint(); }
         public void OnPointerDown(PointerEventData data) { pressed = true; Paint(); }
@@ -29,7 +30,7 @@ namespace SurfaceForge.UI
             Paint();
         }
         private void Update() { Paint(); }
-        private void OnDisable() { hovered = pressed = false; flashUntil = 0; Paint(); }
+        private void OnDisable() { Unavailable?.Invoke(); hovered = pressed = false; flashUntil = 0; Paint(); }
         private void Paint()
         {
             if (background) background.color = pressed ? new Color(1, 0.65f, 0.15f) :
