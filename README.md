@@ -21,7 +21,7 @@
 
 指引線與落點標記規劃於獨立 VR 模擬場景實作，不列入桌面場景。早期代理輸入測試的限制保留於驗證紀錄作為歷史觀察；使用者已於 2026-11-06 確認 Editor Play Mode 人工測試沒有問題。
 
-後續將在 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 開發鍵鼠 VR 模擬，使用獨立 TerrainData 副本並共用道具資產。兩個場景完成後，才加入啟動場景選單，讓驗收者在同一個 Windows App 選擇桌面版或 VR 模擬版，並可返回選單。完整邊界驗收與正式建置延後到整合階段，各功能開發期間仍進行基本驗證。目前 VR 場景與啟動選單尚未實作。詳細內容請參閱[開發計畫](Docs/DevelopmentPlan.md)與 [VR 模擬規格](Docs/VRSimulationDevelopment.md)。鍵鼠模擬不等於 XR 硬體驗證。
+鍵鼠 VR 模擬在 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 逐階段開發，使用獨立 TerrainData 副本並共用道具資產。兩個場景完成後，才加入啟動場景選單，讓驗收者在同一個 Windows App 選擇桌面版或 VR 模擬版，並可返回選單。完整邊界驗收與正式建置延後到整合階段，各功能開發期間仍進行基本驗證。目前已完成 S0 獨立場景與地形副本，可直接開啟 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 並進入 Play Mode 檢視地形；攝影機為固定暫時視角，尚無角色、移動、控制器或道具互動。S1–S5 與啟動選單尚未實作。S0 的實際檢查與限制見 [S0 驗證紀錄](Docs/S0Validation.md)。詳細內容請參閱[開發計畫](Docs/DevelopmentPlan.md)與 [VR 模擬規格](Docs/VRSimulationDevelopment.md)。鍵鼠模擬不等於 XR 硬體驗證。
 
 | 穩定 ID／名稱 | 模型尺寸（公尺） | 模型碰撞器 |
 | --- | --- | --- |

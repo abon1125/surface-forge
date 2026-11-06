@@ -2,7 +2,7 @@
 
 日期：2026-11-06
 
-狀態：討論整理與開發規劃，尚未代表已實作或驗收。
+狀態：2026-11-06 已完成 S0 獨立場景與地形副本，已執行 Editor 基本檢查；S1–S5 與 I1–I2 仍為後續規劃。詳見 [S0 驗證紀錄](S0Validation.md)。
 
 ## 1. 目標與範圍
 
@@ -26,7 +26,7 @@
 
 ### 獨立場景與資產邊界
 
-- 新場景包含自己的 Terrain、燈光、角色、攝影機、AudioListener、單一 EventSystem、放置與選取系統，以及世界空間 UI；可在沒有 Main 或選單場景的情況下直接進入 Play Mode。
+- S0 已配置獨立 Terrain、燈光、暫時檢視攝影機、AudioListener 與單一 EventSystem，可在沒有 Main 或選單場景的情況下直接進入 Play Mode。角色、控制器、放置與選取系統及世界空間 UI 於 S1–S5 逐階段加入。
 - 複製現有 TerrainData 至 `Assets/SurfaceForge/Terrain/VRSimulationTerrain.asset` 作為起點，新場景 Terrain 與 TerrainCollider 皆參照此副本；調整 VR 地形高度與尺寸不回寫桌面 TerrainData。Terrain 保持 Surface layer。
 - 共用既有 PropDefinition、道具 prefab、圖示及適用材質。TerrainLayer 與材質若需 VR 專用調整，先另存副本，避免共享資產修改影響桌面。
 - 場景參照使用 Inspector 明確配置，不從 Main 尋找物件，不使用跨場景單例或 DontDestroyOnLoad 保存操作狀態。
@@ -53,6 +53,8 @@ SimulationPlayer（角色根節點／移動與水平轉向）
 WASD 以水平觀看方向移動；第一版不包含跳躍、攀爬或獨立手部移動。角色是否貼地行走、採用何種碰撞與可移動範圍，於角色階段確認，避免直接沿用任意飛行行為。
 
 新場景不掛載原本的自動取景攝影機邏輯，避免 `TerrainOverviewCamera` 每幀覆寫視窗或取景設定；Main 的攝影機設定保留。
+
+S0 暫時攝影機僅供固定視角檢視地形，沒有觀看或移動輸入，不代表 S1 角色參數已選定。TerrainData 尺寸沿用桌面起點 80 × 18 × 64 公尺，高度圖解析度 257；共享 TerrainLayer、貼圖及材質保持原樣。Main 啟動設定與建置清單維持原狀。
 
 ## 4. 建議鍵鼠映射
 
@@ -148,7 +150,7 @@ UI 與場景命中需依距離及遮擋規則比較，不能讓面板穿過前�
 
 | 階段 | 內容 | 完成條件 |
 | --- | --- | --- |
-| S0 | 獨立場景、地形副本與場景參照 | 可直接啟動，不依賴 Main，VR 地形修改不影響桌面 |
+| S0 | 獨立場景、地形副本與場景參照 | 已實作並完成 Editor 基本檢查；獨立啟動與 TerrainData 參照隔離，詳見 S0 驗證紀錄 |
 | S1 | 膠囊、雙球、第一人稱攝影機與移動 | 能觀看及移動，身體不遮擋操作 |
 | S2 | 左球面板與 Tab 開關 | 初始收合，開關穩定，四種道具可見 |
 | S3 | 右球射線與 UI 路由 | 可指向、點選、捲動，無 UI 穿透 |
@@ -163,8 +165,8 @@ UI 與場景命中需依距離及遮擋規則比較，不能讓面板穿過前�
 
 S0–S5 逐項進行相關基本驗證；I2 再於整合 App 完整重驗，包含視窗比例、場景往返與 Editor 外建置。
 
-- [ ] VRSimulation 可直接開啟，不依賴 Main 或 SceneMenu，無桌面 UI 與自動取景干擾。
-- [ ] VR 使用獨立 TerrainData，Terrain 與 TerrainCollider 指向同一副本，修改不影響桌面地形。
+- [x] VRSimulation 可直接開啟，不依賴 Main 或 SceneMenu，無桌面 UI 與自動取景干擾。
+- [x] VR 使用獨立 TerrainData，Terrain 與 TerrainCollider 指向同一副本，修改不影響桌面地形。
 - [ ] 膠囊與左右小球關係正確，攝影機與移動方向一致。
 - [ ] Tab 在左球旁開關面板，不產生重複 UI。
 - [ ] 射線從右球發出，UI 與場景操作使用相同射線。
