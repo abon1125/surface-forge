@@ -3388,7 +3388,7 @@ MonoBehaviour:
   list: {fileID: 451897297}
   rayLine: {fileID: 845845094}
   hitMarker: {fileID: 1928853949}
-  wheelUnitsPerStep: 120
+  wheelUnitsPerStep: 3
 --- !u!1 &2014239657
 GameObject:
   m_ObjectHideFlags: 0

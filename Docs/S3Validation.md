@@ -48,3 +48,13 @@
 S3 尚未獲使用者對射線精準度、閱讀與操作舒適度的人工確認。原生焦點往返、按住跨視窗、停用重啟及連續縮放仍需使用者實際試玩。沒有 Windows 建置、Editor 外驗收、XR 或錄影交付；沒有開始 S4–S5、共用放置核心重構或場景選單。本次僅建立本機提交，不推送、建立 PR 或合併。
 
 保留且排除提交的原有檔案：Assets/Settings/DefaultVolumeProfile.asset、PC_RPAsset.asset、UniversalRenderPipelineGlobalSettings.asset、ProjectSettings/ProjectSettings.asset 與未追蹤的 ProjectSettings/SceneTemplateSettings.json。原有 batching 與各平台 DOTWEEN 符號保留，未 reset、clean 或覆寫。
+
+## 使用者試玩與滾輪參數補記（2026-11-06）
+
+適用基準為 S3 本機提交 f06f63b。使用者先回報「目前 play 測試正常」，之後暫時縮小 viewport 驗證溢出，回報「滾輪正常，但滾動距離太短」，並自行將 Scroll Sensitivity 從 24 調整為 720，確認此數值較適合。當時磁碟場景差異只有 m_ScrollSensitivity: 24 → 720，沒有將測試用 viewport 縮小保存；後續最終設定見下段。
+
+此補記更新目前的 Play Mode 整體確認與滾輪操作確認，保留上方初次交付時尚待確認的歷史敘述；不推定使用者已逐項驗證所有遮擋、中斷、焦點、解析度或連續縮放案例，也不擴大為射線精準度與全部操作舒適度驗收。此次沒有重新執行自動測試，原有 job 不算重跑。
+
+原因核對：MenuAnchor 的 8.333334 倍本地縮放抵銷左球的 0.12 倍，PropMenu 仍使用 0.001 m/pixel。ScrollRect.OnScroll 是將 scrollDelta × scrollSensitivity 加到 content.anchoredPosition（UI 本地單位），不直接以 MenuAnchor 的縮放計算步長；路由將 Mouse.scroll 除以可調的 Wheel Units Per Step（初值 120）。尚無證據將原本步長偏短歸因於 MenuAnchor 縮放。
+
+使用者之後將 Wheel Units Per Step 改為 3、Scroll Sensitivity 恢復 24，回報「這樣就比較正常了」。目前磁碟場景相對 f06f63b 只變更 wheelUnitsPerStep: 120 → 3；Scroll Sensitivity=24、viewport 高度=288。此最終設定取代上段中途的 120／720，兩者於 Inspector 分別位於 EventSystem／Viewport。2026-11-06 使用者接著授權提交 PR 並請求 GitHub Codex Review；初次交付的「僅本機提交」為歷史狀態，不代表此次未獲推送授權。

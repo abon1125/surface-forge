@@ -245,3 +245,5 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 ### S3 執行狀態（2026-11-06）
 
 重新 fetch 確認 PR #13 合併後 origin/main 為 dd90baf，再從同步的 main 建立 codex/vr-simulation-s3。實作右球世界射線、有限距離與命中回饋、UI 距離遮擋及專用輸入模組；清單具有 viewport／content／ScrollRect，點選只回饋四種既有 PropDefinition ID，不建立三維道具。展開完成才接受操作，收合要求即取消；保留 S1 參數與 S2 短按／反向動畫防護。詳細證據、診斷及未測範圍見 [S3 驗證紀錄](S3Validation.md)。尚未獲使用者對射線精準度及操作舒適度的人工確認；S4–S5 與場景選單未開始，本次僅本機提交，不推送或建立 PR。S0–S2 上述歷史記錄與 job 不視為本次重跑。
+
+S3 使用者後續回報 Play Mode 測試正常，並確認縮小 viewport 後滾輪可用；滾輪參數經使用者試玩最終改為 Wheel Units Per Step=3、Scroll Sensitivity=24，取代中途的 120／720。此為整體試玩及滾輪參數確認，不推定所有邊界案例或精準度／舒適度皆已驗收，補記見 S3Validation。

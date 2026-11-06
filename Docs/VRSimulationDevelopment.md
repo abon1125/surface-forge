@@ -131,7 +131,7 @@ UI 與場景命中需依距離及遮擋規則比較，不能讓面板穿過前�
 - VR 的 InputSystemUIInputModule 停用，既有 EventSystem 保留，SimulationRayInputModule 是唯一有效模組，不派送 navigation、submit 或拖曳。LateUpdate 在角色移動與面板跟隨後查詢；hover／down／up／click 使用同一實際 Ray 結果。項目 hover 藍色、press 橘色、click 綠色 0.3 秒，提示顯示 CLICK: 穩定 ID；僅記錄既有 Definition，不建立任何道具。
 - S3 取代 S2 的純顯示設定：SimulationPropCatalog.Awake 只 Bind，不再覆寫 Graphic.raycastTarget。場景只讓面板背景、viewport、四個項目背景接受查詢；圖示與文字不接收。沒有 GraphicRaycaster 或桌面手勢元件。CanvasGroup 的 alpha／interactable／blocksRaycasts 由 SimulationPropMenu 管理。
 - IsExpanded 仍為目標；IsInteractive 要求元件啟用、目標展開、progress 到達 1 且 Canvas 有效。收合要求當影格立即取消操作；開合途中可見背景保留遮擋，但不接收新操作。原 S2 wasPressedThisFrame、快速反向及失焦後 Tab release 防護保持。
-- viewport 332×288 px，content 332×288 px；四列每列 72 px，項目高 66 px。ScrollRect 垂直、Clamped、無慣性，scrollSensitivity=24 px，滾輪 120 units 為一步；四項預設無溢出。滾輪只有實際命中 viewport 或其可見子項且面板可互動時派送，不送拖曳。
+- viewport 332×288 px，content 332×288 px；四列每列 72 px，項目高 66 px。ScrollRect 垂直、Clamped、無慣性，scrollSensitivity=24；使用者試玩後將 Wheel Units Per Step 設為 3（目前場景設定），滾輪輸入先除以 3；四項預設無溢出。滾輪只有實際命中 viewport 或其可見子項且面板可互動時派送，不送拖曳。
 - 右鍵觀看期間停止瞄準與全部 UI 按鍵／滾輪派送，隱藏射線及清除命中，不接管 S1 游標。失焦、暫停、離開有效 Game View、停用、收合或卸載會送取消用 pointerUp、清除 hover／press；中斷後需觀察左鍵放開才能開始新操作。Editor 另外要求 focusedWindow 與 mouseOverWindow 均為 GameView，不能以 Inspector／Scene View 的滑鼠取得操作。
 
 S3 測試區分 Input System 測試裝置、直接世界射線查詢、生命週期回呼與原生 Game View 操作，詳見 [S3Validation](S3Validation.md)。本階段不含拖曳擁有權、預覽、放置、指引線、選取刪除或場景選單；第 7–8 節的相關內容仍為 S4–S5 規劃。
