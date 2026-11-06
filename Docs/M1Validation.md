@@ -1,5 +1,7 @@
 # M1 validation
 
+歷史提交參照：本文件保留原 SHA 與驗證當時的敘述；改寫後提交請查閱 [Git 歷史遷移紀錄](GitHistoryMigration.md)。測試 job ID 不是提交 SHA，保持原值。舊測試與審查結果仍對應原提交，不代表已在新 SHA 重跑。
+
 Environment: Unity 6000.3.25f1, Windows Editor, URP 17.3.0, Input System 1.20.0. Date: 2026-11-05.
 
 ## Implemented
