@@ -19,7 +19,9 @@ The catalog displays four props with original icons and distinct URP materials. 
 - The nearby menu identifies the selected prop. **DELETE** removes only that instance. The menu follows the target and viewport, stays inside the canvas and left of the sidebar, and hides behind the camera or outside its viewport.
 - Starting a catalog drag (including vertical scrolling), losing focus, or disabling selection/menu clears selection. A placement release never doubles as a selection click; a fresh scene click is required.
 
-Guide lines remain for a later milestone. M3 physical input acceptance gaps are retained in the validation records.
+Guide lines and landing markers are planned for the independent VR simulation scene, not the desktop scene. M3 physical input acceptance gaps are retained in the validation records.
+
+Planned development continues with a keyboard/mouse VR simulation in `Assets/SurfaceForge/Scenes/VRSimulation.unity`, using a separate TerrainData copy and shared prop assets. After both scenes are ready, a startup scene menu will let reviewers choose Desktop or VR Simulation in one Windows app and return to the menu. Complete boundary validation and the final build are deferred to that integration stage; basic checks continue during feature development. The VR scene and startup menu are not implemented yet. See the [development plan](Docs/DevelopmentPlan.md) and [VR simulation specification](Docs/VRSimulationDevelopment.md). Keyboard/mouse simulation does not constitute hardware XR validation.
 
 | Stable ID / name | Model size (metres) | Model collider |
 | --- | --- | --- |
@@ -41,4 +43,4 @@ Assets under `Assets/SurfaceForge/`:
 
 The models use Unity primitives and an original cone mesh; icons and material colors were authored for this project. No external artwork was added.
 
-See [M1 validation](Docs/M1Validation.md), [M2 validation](Docs/M2Validation.md), [M3 validation](Docs/M3Validation.md) and [M4 validation](Docs/M4Validation.md) for performed checks and limitations. M3 and M4 await user manual acceptance; automation and code review do not replace it. No desktop build or recording is included yet. Desktop executable and continuous native-window resize acceptance are deferred until the necessary features are complete.
+See [M1 validation](Docs/M1Validation.md), [M2 validation](Docs/M2Validation.md), [M3 validation](Docs/M3Validation.md) and [M4 validation](Docs/M4Validation.md) for performed checks and limitations. M3 and M4 await user manual acceptance; automation and code review do not replace it. No desktop build or recording is included yet. Executable and continuous native-window resize acceptance will be completed during scene-menu integration after both scenes are ready.
