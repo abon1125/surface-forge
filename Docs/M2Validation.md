@@ -1,5 +1,9 @@
 # M2 validation
 
+## User acceptance update — 2026-11-06
+
+The user confirmed desktop manual testing in Unity Editor Play Mode with no issues found. Editor Play Mode manual acceptance is recorded as complete based on that report; the individual checklist coverage, resolutions and repetition counts were not separately reported. Earlier pending-acceptance statements below are historical. Windows executable and continuous native-window resize acceptance remain scheduled for I2.
+
 Environment: Unity 6000.3.25f1 Windows Editor, URP 17.3.0, Input System 1.20.0. Date: 2026-11-05. Baseline: main `73ffede`, including M1 `85c767a`.
 
 ## Delivered
