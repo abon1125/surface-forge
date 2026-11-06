@@ -21,7 +21,7 @@
 
 指引線與落點標記規劃於獨立 VR 模擬場景實作，不列入桌面場景。早期代理輸入測試的限制保留於驗證紀錄作為歷史觀察；使用者已於 2026-11-06 確認 Editor Play Mode 人工測試沒有問題。
 
-鍵鼠 VR 模擬在 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 逐階段開發，使用獨立 TerrainData 副本並共用道具資產。兩個場景完成後，才加入啟動場景選單，讓驗收者在同一個 Windows App 選擇桌面版或 VR 模擬版，並可返回選單。完整邊界驗收與正式建置延後到整合階段，各功能開發期間仍進行基本驗證。目前已完成 S0 獨立場景與地形副本，可直接開啟 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 並進入 Play Mode 檢視地形；攝影機為固定暫時視角，尚無角色、移動、控制器或道具互動。S1–S5 與啟動選單尚未實作。S0 的實際檢查與限制見 [S0 驗證紀錄](Docs/S0Validation.md)。詳細內容請參閱[開發計畫](Docs/DevelopmentPlan.md)與 [VR 模擬規格](Docs/VRSimulationDevelopment.md)。鍵鼠模擬不等於 XR 硬體驗證。
+鍵鼠 VR 模擬在 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 逐階段開發，使用獨立 TerrainData 副本並共用道具資產。兩個場景完成後，才加入啟動場景選單，讓驗收者在同一個 Windows App 選擇桌面版或 VR 模擬版，並可返回選單。完整邊界驗收與正式建置延後到整合階段，各功能開發期間仍進行基本驗證。目前已完成 S0 獨立場景及地形副本與 S1 模擬角色，可直接開啟 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 進入 Play Mode。WASD 依水平觀看方向貼地行走，按住右鍵移動滑鼠觀看，放開恢復游標；不跳躍，CharacterController 處理碰撞、45° 坡度限制及 Terrain 邊界停止。第一人稱畫面包含固定跟隨的左右小球，膠囊預設僅投射陰影。速度、尺寸、球偏移、靈敏度與俯仰限制可於 SimulationPlayer Inspector 調整。S1 已完成 Editor 自動測試及構圖檢查，已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過）；S2–S5、道具互動及啟動選單尚未實作。實際結果與限制見 [S0 驗證紀錄](Docs/S0Validation.md)及 [S1 驗證紀錄](Docs/S1Validation.md)。詳細內容請參閱[開發計畫](Docs/DevelopmentPlan.md)與 [VR 模擬規格](Docs/VRSimulationDevelopment.md)。鍵鼠模擬不等於 XR 硬體驗證。
 
 | 穩定 ID／名稱 | 模型尺寸（公尺） | 模型碰撞器 |
 | --- | --- | --- |
@@ -39,7 +39,7 @@
 - `UI/Prefabs/PropCatalogItem.prefab`：可重用的圖示／名稱清單項目，背景可接受射線查詢。
 - `UI/Icons/` 與 `Materials/`：對應圖示與材質；`Models/Cone.asset` 保存本專案製作的封閉 32 邊錐體網格。
 - `Scripts/`：道具清單、手勢路由、放置、TerrainCollider 查詢、已放置道具標記、選取與 UGUI 物件旁選單。Main 明確指定攝影機、遮罩、碰撞器、共用預覽材質及 UI 參照。預覽使用 Ignore Raycast layer 並停用碰撞器；選取查詢 PlacedProp layer，距離上限為 500 公尺，選取與地形查詢互不改變對方行為。
-- `Tests/Editor/`：放置與選取的回歸測試。從 Test Runner 的 EditMode 分頁執行 `SurfaceForge.Tests`；測試會進入 Play Mode，並等待實際 PlayerLoop 影格。放置測試使用隔離場景，選取整合測試會開啟 Main，執行前請先儲存場景。Input System 測試滑鼠與 UGUI 事件呼叫不同於實際桌面輸入。
+- `Tests/Editor/`：放置、選取及 S1 角色的測試（S1 可用 `SurfaceForge.Tests.SimulationPlayerTests` 篩選）。從 Test Runner 的 EditMode 分頁執行 `SurfaceForge.Tests`；測試會進入 Play Mode，並等待實際 PlayerLoop 影格。放置測試使用隔離場景，選取整合測試會開啟 Main，執行前請先儲存場景。Input System 測試滑鼠與 UGUI 事件呼叫不同於實際桌面輸入。
 
 模型採用 Unity 基本形狀與本專案製作的錐體網格；圖示與材質配色皆為本專案製作，未加入外部美術素材。
 
