@@ -8,7 +8,7 @@
 
 最終交付為單一 Windows App：啟動後由場景選單選擇桌面版或 VR 鍵鼠模擬版進行驗收，並可返回選單。先完成桌面 M1–M4 與獨立 VR 模擬場景，再實作選單及整合驗收。交付包含執行檔、實際執行錄影、公開儲存庫連結及可回溯的階段提交紀錄。
 
-VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），後續互動、選單與建置尚未完成。
+VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3–S5 互動、選單與建置尚未完成。
 
 ## 2. 專案基準與設計決策
 
@@ -211,7 +211,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 | 公開儲存庫與初始推送 | 已建立，保留 M1–M4 與文件 PR 的開發歷程 |
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
 | 指引線 | 待實作與驗證；已移至 VR 模擬 S4 |
-| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2–S5 待實作與驗證 |
+| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作、人工可讀性及舒適度待確認（見 S2 驗證紀錄）；S3–S5 待實作與驗證 |
 | 場景選單 | 兩版完成後於 I1 實作 |
 | XR | 選配，待確認設備與時間 |
 | 整合建置與完整驗收 | 待執行；原 M6 延後至 I2 |
@@ -226,3 +226,8 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 開始時重新 fetch 並以遠端 refs/heads/main 確認 PR #10 的實際合併結果，main 為 `024ce4fbd6d133fb1de01e8dce85545bb122b9d2`，從更新後 main 建立 `codex/vr-simulation-s1`。五個無關未提交設定保留且排除提交。
 
 角色行為經使用者確認後實作：CharacterController 貼地、重力、45° 坡度限制及內縮 Terrain 邊界；根節點水平轉向，ViewPivot 俯仰，雙球固定跟隨。已替換 S0 暫時攝影機，新增 WASD、右鍵觀看與游標中斷清理，參數集中於 Inspector。測試及限制見 [S1 驗證紀錄](S1Validation.md)。S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試因場景無陡坡而略過）；本次只建立本機提交，不推送、建立 PR 或開始 S2。S0 上節及其驗證紀錄保留當時事實與 SHA，並非此次重跑。
+
+
+### S2 執行狀態（2026-11-06）
+
+從重新 fetch 確認的 origin/main c26529b（含 PR #11、#12）建立 codex/vr-simulation-s2。新增左球 MenuAnchor／World Space PropMenu，沿用四種道具資料，只做顯示、Tab 單次切換與 Esc 收合；輸入元件常駐、生命週期清理，不接收普通滑鼠 UI 操作，不修改 S1 參數。使用者另確認保留 Editor 中原有 Camera 的 URP 元件與 Skybox 調整。驗證證據與限制見 [S2 驗證紀錄](S2Validation.md)；初次交付仍待使用者確認面板可讀性與舒適度。本階段僅本機提交，不推送、建立 PR 或進行 S3。

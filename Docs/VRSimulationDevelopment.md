@@ -2,7 +2,7 @@
 
 日期：2026-11-06
 
-狀態：2026-11-06 已完成 S0 與 S1 角色／移動實作及 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試因場景無陡坡而略過），S2–S5 與 I1–I2 仍為後續規劃。詳見 [S0 驗證紀錄](S0Validation.md)及 [S1 驗證紀錄](S1Validation.md)。
+狀態：2026-11-06 已完成 S0 與 S1 角色／移動實作及 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試因場景無陡坡而略過），S2 左球面板已實作，技術驗證與人工驗收狀態見 [S2 驗證紀錄](S2Validation.md)；S3–S5 與 I1–I2 仍為後續規劃。詳見 [S0 驗證紀錄](S0Validation.md)及 [S1 驗證紀錄](S1Validation.md)。
 
 ## 1. 目標與範圍
 
@@ -92,6 +92,12 @@ S1 初始參數：速度 4 m/s、重力 20 m/s²、skin width 0.03 m、邊界安
 
 不直接沿用桌面清單「向左拖曳複製、垂直拖曳捲動」的手勢分類。模擬模式建議以射線在面板上的移動距離判定拖曳門檻，再於拖出項目後進入放置；門檻數值實測調整。
 
+### S2 實作邊界（2026-11-06）
+
+MenuAnchor 上的 SimulationPropMenu 常駐處理 Tab 按鍵邊緣及 Esc 收合，停用／重啟與場景重新載入回到收合；失焦或暫停後須先放開 Tab。面板跟隨左球並朝向明確指定的 Camera，不接管游標或右鍵觀看。Inspector 提供公尺偏移、380 × 380 畫布尺寸、0.001 m/pixel 與朝向微調；初值偏移 (0, 0.29, 0.15) m，抵銷 S1 球的視覺縮放，不調整 S1 參數。
+
+SimulationPropCatalog 以四個場景項目重用 PropCatalogItemView 的純顯示 Bind，不使用桌面 PropCatalogView 或 PropItemDragHandler，不動共用道具資料。四項同時可見，本階段不需要 ScrollRect；Canvas 無 GraphicRaycaster，CanvasGroup 不接受互動或射線，所有 Graphic.raycastTarget=false，既有 InputSystemUIInputModule 無法透過普通滑鼠操作清單。捲動、射線、拖曳、取消及放置仍留待 S3–S5，不建立空殼系統。
+
 ## 6. 右控制器射線與輸入優先順序
 
 瞄準流程：
@@ -161,7 +167,7 @@ UI 與場景命中需依距離及遮擋規則比較，不能讓面板穿過前�
 | --- | --- | --- |
 | S0 | 獨立場景、地形副本與場景參照 | 已實作並完成 Editor 基本檢查；獨立啟動與 TerrainData 參照隔離，詳見 S0 驗證紀錄 |
 | S1 | 膠囊、雙球、第一人稱攝影機與移動 | 已實作及完成 Editor 自動測試、構圖檢查；使用者已確認 Editor Play Mode 操作正常，陡坡人工測試略過，詳見 S1 驗證紀錄 |
-| S2 | 左球面板與 Tab 開關 | 初始收合，開關穩定，四種道具可見 |
+| S2 | 左球面板與 Tab 開關 | 已實作初始收合、Tab／Esc 與四種道具呈現；人工可讀性及舒適度待確認，詳見 S2 驗證紀錄 |
 | S3 | 右球射線與 UI 路由 | 可指向、點選、捲動，無 UI 穿透 |
 | S4 | 射線放置、共用核心、指引線與落點標記 | 承接原 M5；可重複拖出、預覽、放置與取消，指引正確清理，桌面功能無退化 |
 | S5 | 射線選取與刪除 | 可切換目標，刪除只影響該實例 |
