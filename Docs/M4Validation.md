@@ -1,5 +1,9 @@
 # M4 validation
 
+## User acceptance update — 2026-11-06
+
+The user confirmed desktop manual testing in Unity Editor Play Mode with no issues found. Editor Play Mode manual acceptance is recorded as complete based on that report; individual scenarios, resolutions and repetition counts were not separately reported. Earlier pending-acceptance statements below are historical. This report does not claim a new automated test run or Windows executable test. Scene-menu integration, complete boundary validation and executable acceptance remain scheduled for I1–I2.
+
 Environment: Unity 6000.3.25f1 Windows Editor, URP 17.3.0, Input System 1.20.0. Date: 2026-11-05. Baseline: main `0ec4d6c`, merged PR #4 including M3 `41a3bb0` and `0e032b8`. Remote fetch and main fast-forward were performed before creating `codex/prop-selection`. No package changes.
 
 ## Delivered behavior
