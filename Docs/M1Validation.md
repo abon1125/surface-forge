@@ -1,39 +1,39 @@
-# M1 validation
+# M1 驗證紀錄
 
-歷史提交參照：本文件保留原 SHA 與驗證當時的敘述；改寫後提交請查閱 [Git 歷史遷移紀錄](GitHistoryMigration.md)。測試 job ID 不是提交 SHA，保持原值。舊測試與審查結果仍對應原提交，不代表已在新 SHA 重跑。
+歷史提交參照：本文件保留原 SHA 與驗證當時的事實；改寫後提交請查閱 [Git 歷史遷移紀錄](GitHistoryMigration.md)。測試 job ID 不是提交 SHA，保持原值。舊測試與審查結果仍對應原提交，不代表已在新 SHA 重跑。
 
-Environment: Unity 6000.3.25f1, Windows Editor, URP 17.3.0, Input System 1.20.0. Date: 2026-11-05.
+環境：Unity 6000.3.25f1、Windows Editor、URP 17.3.0、Input System 1.20.0。日期：2026-11-05。
 
-## Implemented
+## 已實作
 
-- Main scene under `Assets/SurfaceForge/Scenes/`, with one 80 × 64 m Terrain and a saved 257 × 257 heightmap.
-- Shared TerrainData for rendering and TerrainCollider, on the dedicated Surface layer. Sculpted high and low areas with smooth transitions; sampled relief approximately 10.94 m.
-- Directional lighting, URP terrain material, original solid-color terrain texture, and an orthographic camera that reserves the sidebar area and fits the terrain bounds.
-- UGUI sidebar, initially collapsed catalog, clipped vertical ScrollRect, layout group, Canvas Scaler (1920 × 1080, match 0.5), and InputSystemUIInputModule.
-- Main enabled as the startup scene in the shared scene list. Desktop settings: windowed, 1280 × 720, resizable.
+- Main 場景位於 `Assets/SurfaceForge/Scenes/`，包含單一 80 × 64 公尺 Terrain，以及已儲存的 257 × 257 高度圖。
+- 地形顯示與 TerrainCollider 共用 TerrainData，並使用專用 Surface layer。高低區域之間平滑銜接，取樣高低差約 10.94 公尺。
+- 方向光、URP 地形材質、本專案製作的純色地形貼圖，以及保留側欄空間、依地形邊界取景的正交攝影機。
+- UGUI 側欄、初始收合的清單、裁切式垂直 ScrollRect、Layout Group、Canvas Scaler（1920 × 1080，匹配值 0.5），以及 InputSystemUIInputModule。
+- 共用場景清單將 Main 設為啟動場景。桌面設定為視窗模式、1280 × 720，支援調整大小。
 
-## Performed checks
+## 已執行檢查
 
-- Clean compilation and Play Mode entry.
-- Temporary Editor-driven physics checks: 81 interior downward rays hit TerrainCollider; four rays immediately outside the four boundaries miss the Surface mask. The Terrain and TerrainCollider use the same saved asset.
-- During a single Play session, changed the actual Game View resolution to 1280 × 720, 1920 × 1080, 1024 × 768, 2560 × 1080, and 640 × 480. Checked toggle screen bounds, UI raycast reachability, expand/collapse via UGUI pointer events, and positive scroll viewport height. Inspected captured frames for terrain bounds and sidebar layout.
-- Direct desktop mouse clicks in the 1280 × 720 Game View expanded and collapsed the catalog through Input System.
-- A virtual mouse experiment did not deliver clicks through the Editor and caused a follow-on exception in the temporary validator. It was removed; it is not counted as a passing input check or a product failure.
+- 編譯正常，成功進入 Play Mode。
+- 暫時的 Editor 驅動物理檢查：81 條地形內向下射線命中 TerrainCollider；緊鄰四側邊界外的四條射線未命中 Surface 遮罩。Terrain 與 TerrainCollider 使用同一份已儲存資產。
+- 在同一次 Play session 將實際 Game View 解析度切換為 1280 × 720、1920 × 1080、1024 × 768、2560 × 1080、640 × 480，檢查開關的螢幕邊界、UI 射線可達性、透過 UGUI 指標事件展開／收合，以及捲動可視區域高度為正值；並檢視擷取畫面中的地形邊界與側欄排版。
+- 在 1280 × 720 Game View 以實際桌面滑鼠點擊，透過 Input System 展開與收合清單。
+- 一次虛擬滑鼠實驗未能透過 Editor 傳送點擊，並導致暫時驗證工具發生後續例外。該工具已移除，此結果不算輸入檢查通過，也不認定為產品故障。
 
-## Self review
+## 自行審查
 
-Reviewed scene references, layers, collision data, startup scene settings, UI anchors, input module, listener lifetime, camera framing, and scope. Fixed the content layout width after screenshot inspection showed excessive text wrapping. Added a dedicated LFS rule for binary TerrainData so the generic .asset YAML line-ending rule cannot alter it; verified the staged LFS SHA-256 matches the source bytes. Temporary authoring/validation scripts and screenshots are excluded from the change. No third-party artwork was introduced.
+已檢查場景參照、layer、碰撞資料、啟動場景設定、UI 錨點、輸入模組、監聽器生命週期、攝影機取景及範圍。截圖顯示文字過度換行後，已修正內容排版寬度。為二進位 TerrainData 加入專用 LFS 規則，避免一般 .asset YAML 換行規則改動其內容；確認暫存區 LFS 的 SHA-256 與來源位元組一致。暫時製作／驗證腳本及截圖未納入變更，未加入第三方美術素材。
 
-## Limits and follow-up
+## 當時的限制與後續工作
 
-- No standalone desktop build or executable test was performed for M1. Native window dragging/resizing and continuous resize behavior remain to be tested in a desktop build; discrete runtime Game View size changes were tested.
-- The list contains only an empty-state message. Populated list scrolling, prop interactions, and placement lifecycle belong to subsequent milestones.
-- Physical mouse input was checked at 1280 × 720; the other resolutions used UGUI event dispatch and raycast/bounds checks.
+- M1 未執行獨立桌面建置或執行檔測試。原生視窗拖動／縮放及連續縮放行為仍須在桌面建置驗證；已測試的是執行期間離散的 Game View 尺寸切換。
+- 清單當時只有空狀態訊息。填入內容後的捲動、道具互動與放置生命週期屬後續里程碑。
+- 實際滑鼠輸入僅檢查 1280 × 720；其他解析度使用 UGUI 事件呼叫及射線／邊界檢查。
 
-## Manual reproduction
+## 人工重現步驟
 
-1. Open Main and enter Play Mode; confirm the list is collapsed.
-2. Click the catalog button twice and verify expansion then collapse.
-3. Switch Game View through the resolutions above. Check the full terrain boundary and sidebar remain visible and the toggle remains reachable.
-4. Inspect the Terrain and TerrainCollider references and Surface layer; use downward physics rays inside and beyond the terrain bounds to repeat the collision check.
-5. Build Windows x64 and test native window resizing when performing desktop acceptance.
+1. 開啟 Main 並進入 Play Mode，確認清單初始收合。
+2. 點擊清單按鈕兩次，確認先展開、再收合。
+3. 將 Game View 切換至上述解析度，確認完整地形邊界與側欄可見，且開關仍可操作。
+4. 檢查 Terrain 與 TerrainCollider 參照及 Surface layer，在地形內外使用向下物理射線重複碰撞檢查。
+5. 桌面驗收時建置 Windows x64，測試原生視窗縮放。
