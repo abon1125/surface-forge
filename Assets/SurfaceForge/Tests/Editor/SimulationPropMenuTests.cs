@@ -45,6 +45,28 @@ namespace SurfaceForge.Tests
             while(Time.realtimeSinceStartup<until)yield return Frames(1);
         }
         [UnityTest]
+        public IEnumerator SameFramePressReleaseAndRepressKeepInputEdges()
+        {
+            if(!Application.isFocused)Assert.Ignore("需要 Editor 聚焦才能測試正式 Update 輸入事件");
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.Tab));
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState());
+            yield return Frames();Assert.That(menu.IsExpanded,Is.True,"同影格 Tab 按放仍切換");
+            yield return Keys(Key.Tab);Assert.That(menu.IsExpanded,Is.False);
+            yield return Frames(10);Assert.That(menu.IsExpanded,Is.False,"持續按住不重複切換");
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState());
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.Tab));
+            yield return Frames();Assert.That(menu.IsExpanded,Is.True,"同影格放開再按下仍切換");
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.Escape));
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState());
+            yield return Frames();Assert.That(menu.IsExpanded,Is.False,"同影格 Esc 按放仍關閉");
+            Call("OnApplicationFocus",false);Call("OnApplicationFocus",true);
+            yield return Keys(Key.Tab);Assert.That(menu.IsExpanded,Is.False,"回焦仍按住必須先放開");
+            yield return Keys();
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.Tab));
+            InputSystem.QueueStateEvent(keyboard,new KeyboardState());
+            yield return Frames();Assert.That(menu.IsExpanded,Is.True,"放開防護解除後短按有效");
+        }
+        [UnityTest]
         public IEnumerator AnimationReversalAndInterruptedCleanup()
         {
             var panel=Field<GameObject>("panel");var group=panel.GetComponent<CanvasGroup>();

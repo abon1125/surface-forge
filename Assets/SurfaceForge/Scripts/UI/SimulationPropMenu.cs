@@ -26,14 +26,14 @@ namespace SurfaceForge.UI
         private CanvasGroup canvasGroup;
         private bool expanded;
         private bool focused = true;
-        private bool tabHeld = true;
+        private bool requireTabRelease = true;
         // 代表目標狀態；收回期間 Canvas 仍保持有效，直到動畫完成。
         public bool IsExpanded => expanded;
 
-        private void OnEnable() { tabHeld = true; Close(); }
-        private void OnDisable() { tabHeld = true; Close(); }
-        private void OnApplicationFocus(bool value) { focused = value; tabHeld = true; if (!value) Snap(expanded); }
-        private void OnApplicationPause(bool value) { if (value) { tabHeld = true; Snap(expanded); } }
+        private void OnEnable() { requireTabRelease = true; Close(); }
+        private void OnDisable() { requireTabRelease = true; Close(); }
+        private void OnApplicationFocus(bool value) { focused = value; requireTabRelease = true; if (!value) Snap(expanded); }
+        private void OnApplicationPause(bool value) { if (value) { requireTabRelease = true; Snap(expanded); } }
         private void OnDestroy() { KillTransition(); }
         private void Close() { Snap(false); }
         private void KillTransition() { transition?.Kill(); transition = null; }
@@ -68,12 +68,15 @@ namespace SurfaceForge.UI
         private void Update()
         {
             var keyboard = Keyboard.current;
-            if (!focused || !Application.isFocused || keyboard == null) { tabHeld = true; return; }
-            bool held = keyboard.tabKey.isPressed;
-            // 以持續狀態偵測邊緣；中斷後必須先觀察放開，避免回焦重播按鍵。
-            if (held && !tabHeld && panel) SetExpanded(!expanded);
-            tabHeld = held;
-            if (keyboard.escapeKey.isPressed) SetExpanded(false);
+            if (!focused || !Application.isFocused || keyboard == null) { requireTabRelease = true; return; }
+            // 只有中斷後使用持續狀態等待放開，該影格不處理可能重播的按下。
+            if (requireTabRelease)
+            {
+                if (!keyboard.tabKey.isPressed) requireTabRelease = false;
+            }
+            // 保留兩次 Update 間的短按，以及放開後再次按下的事件。
+            else if (keyboard.tabKey.wasPressedThisFrame) SetExpanded(!expanded);
+            if (keyboard.escapeKey.wasPressedThisFrame) SetExpanded(false);
         }
         private void LateUpdate()
         {

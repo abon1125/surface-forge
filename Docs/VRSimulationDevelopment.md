@@ -94,7 +94,7 @@ S1 初始參數：速度 4 m/s、重力 20 m/s²、skin width 0.03 m、邊界安
 
 ### S2 實作邊界（2026-11-06）
 
-MenuAnchor 上的 SimulationPropMenu 常駐處理 Tab 按鍵邊緣及 Esc 收合，停用／重啟與場景重新載入回到收合；失焦或暫停後須先放開 Tab。面板跟隨左球並朝向明確指定的 Camera，不接管游標或右鍵觀看。Inspector 提供公尺偏移、380 × 380 畫布尺寸、0.001 m/pixel 與朝向微調；初值偏移 (0, 0.29, 0.15) m，抵銷 S1 球的視覺縮放，不調整 S1 參數。
+MenuAnchor 上的 SimulationPropMenu 常駐處理 Tab／Esc 的 wasPressedThisFrame 按下事件（包含同影格按放）與收合，停用／重啟與場景重新載入回到收合；失焦或暫停後須先放開 Tab。面板跟隨左球並朝向明確指定的 Camera，不接管游標或右鍵觀看。Inspector 提供公尺偏移、380 × 380 畫布尺寸、0.001 m/pixel 與朝向微調；初值偏移 (0, 0.29, 0.15) m，抵銷 S1 球的視覺縮放，不調整 S1 參數。
 
 SimulationPropCatalog 以四個場景項目重用 PropCatalogItemView 的純顯示 Bind，不使用桌面 PropCatalogView 或 PropItemDragHandler，不動共用道具資料。四項同時可見，本階段不需要 ScrollRect；Canvas 無 GraphicRaycaster，CanvasGroup 不接受互動或射線，所有 Graphic.raycastTarget=false，既有 InputSystemUIInputModule 無法透過普通滑鼠操作清單。捲動、射線、拖曳、取消及放置仍留待 S3–S5，不建立空殼系統。
 

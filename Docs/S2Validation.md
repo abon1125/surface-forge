@@ -63,3 +63,11 @@
 適用功能版本：`fb5727a`（含 S2 面板與 DOTween 開合動畫）。使用者在交付後回報「測試 ok」，並要求提交 PR 及審查，記錄為 S2（含動畫）的使用者整體測試確認。本補記更新上述「尚待使用者確認」的目前狀態；原段落保留初次交付時的歷史事實。
 
 使用者未另列動畫速度、可讀性、舒適度、原生鍵鼠／焦點、解析度／縮放、裝置及重複次數等逐項結果，不將整體確認擴大成每項皆通過，也不延伸為 Windows、XR 或 S3–S5 驗收。此次補記沒有重跑 Unity 測試，既有 job、SHA、工具診斷與限制均保留。
+
+## PR #13 Codex Review 修正（2026-11-06）
+
+GitHub Codex Review 對 `00e647fee2a5f0d310dcd67572d9ffbcb41992e5` 提出 [P2：保留同影格 Tab／Esc 按下事件](https://github.com/abon1125/surface-forge/pull/13#discussion_r4490519550)。原本僅從 isPressed 推導邊緣，兩次 Update 之間完成的短按或放開再按下可能漏接。
+
+已改為正常操作使用 wasPressedThisFrame；中斷後以獨立 requireTabRelease 防護等待觀察到放開，解除防護當影格不處理可能重播的 Tab，仍保留失焦／重啟安全行為。新增真正經 Input System 及正式 Update 的同影格按放／再按測試，沒有以直接呼叫開關替代輸入驗證。
+
+編譯 `b2c6637d` completed、errorCount=0；測試 `4951a73e` 因已知 batch_state.json 分享衝突 failed、totalTests=0，確認 Editor 停止後重試 `925abf57`，最終 S2 5/5 通過（87 秒），failed／skipped／inconclusive 均 0，包含原有四項與新增按鍵事件案例。本輪未重新執行獨立 S1 測試類別；原有 S1 證據維持原版本，S2 原有右鍵游標案例已隨五項回歸重跑。
