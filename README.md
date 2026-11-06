@@ -1,46 +1,46 @@
 # SurfaceForge
 
-A Unity desktop terrain workspace with a finite terrain scene, draggable prop catalog, and prop selection/deletion.
+以 Unity 製作的桌面地形工作區，提供有限起伏地形、可拖曳的道具清單，以及道具選取與刪除功能。
 
-- Unity 6000.3.25f1, URP 17.3.0, Input System 1.20.0.
-- Open `Assets/SurfaceForge/Scenes/Main.unity` and enter Play Mode.
-- The right sidebar starts collapsed. Click **PROPS / OPEN +** to expand the scrollable list area; click again to close.
-- The camera reserves space for the sidebar and fits the terrain as the viewport changes.
-- The shared build scene list starts with Main. Desktop defaults are a resizable 1280 × 720 window.
+- 開發環境：Unity 6000.3.25f1、URP 17.3.0、Input System 1.20.0。
+- 開啟 `Assets/SurfaceForge/Scenes/Main.unity`，進入 Play Mode 即可操作。
+- 右側清單初始收合。點擊 **PROPS / OPEN +** 展開可捲動清單，再次點擊即可收合。
+- 攝影機會保留側欄空間，並隨可視區域變化調整地形取景。
+- 目前共用建置場景清單以 Main 為啟動場景；桌面預設為可調整大小的 1280 × 720 視窗。
 
-The catalog displays four props with original icons and distinct URP materials. Rows are created once from the explicitly assigned definitions on the Sidebar's `PropCatalogView`.
+清單提供四種道具，各自使用本專案製作的圖示與不同的 URP 材質。清單項目依 Sidebar 的 `PropCatalogView` 明確指定的道具定義建立，且只建立一次。
 
-- Drag a row **horizontally to the left** past the UI drag threshold to copy a prop. Vertical gestures scroll the list; the initial direction owns the entire gesture. Mouse wheel scrolling remains available.
-- A green preview follows a valid terrain hit and aligns its bottom anchor and up axis with the hit point and normal. Red indicates no terrain hit; the preview is hidden while over UI.
-- Release on the terrain to place one static prop. Release over any UI or outside the terrain to cancel. Escape, focus loss, leaving the Game View, or disabling the source/controller also cancel.
-- Original catalog rows remain available. Placed props retain their definition and model colliders. Overlap is allowed and placement is not saved between sessions.
+- 將項目**水平向左拖曳**，超過 UI 拖曳門檻後即可複製道具。垂直拖曳用於捲動清單；初始方向決定整次手勢的用途，也可使用滑鼠滾輪捲動。
+- 命中合法地形時顯示綠色預覽，底部錨點對齊命中位置，向上軸對齊地形法線。未命中地形時顯示紅色預覽；指標位於 UI 上時隱藏預覽。
+- 在地形上放開可放置一個靜態道具；在任何 UI 上或地形外放開則取消。按 Esc、失去焦點、離開 Game View，或停用來源項目／控制器時也會取消。
+- 原始清單項目會保留，可重複拖曳。已放置道具保留道具定義與模型碰撞器；允許彼此重疊，不跨執行階段保存放置結果。
 
-- Left-click a placed prop without dragging to select it. Click another visible prop to switch; click terrain or empty scene space to clear. UI clicks retain the scene target.
-- The nearby menu identifies the selected prop. **DELETE** removes only that instance. The menu follows the target and viewport, stays inside the canvas and left of the sidebar, and hides behind the camera or outside its viewport.
-- Starting a catalog drag (including vertical scrolling), losing focus, or disabling selection/menu clears selection. A placement release never doubles as a selection click; a fresh scene click is required.
+- 以滑鼠左鍵點擊已放置道具即可選取，拖曳不視為點擊。點擊另一個可見道具可切換目標；點擊地形或場景空白處可清除選取；點擊 UI 則保留目前目標。
+- 物件旁選單顯示所選道具名稱，點擊 **DELETE** 只會刪除該實例。選單隨目標與可視區域更新位置，保持在畫布內、側欄左方；目標在攝影機後方或可視區域外時隱藏。
+- 開始清單拖曳（包含垂直捲動）、失去焦點，或停用選取元件／選單時會清除選取。放置結束的同一次放開不會額外觸發選取，必須重新點擊場景。
 
-Guide lines and landing markers are planned for the independent VR simulation scene, not the desktop scene. Earlier agent input-testing limitations are retained as historical observations in the validation records; the user confirmed Editor Play Mode manual testing with no issues on 2026-11-06.
+指引線與落點標記規劃於獨立 VR 模擬場景實作，不列入桌面場景。早期代理輸入測試的限制保留於驗證紀錄作為歷史觀察；使用者已於 2026-11-06 確認 Editor Play Mode 人工測試沒有問題。
 
-Planned development continues with a keyboard/mouse VR simulation in `Assets/SurfaceForge/Scenes/VRSimulation.unity`, using a separate TerrainData copy and shared prop assets. After both scenes are ready, a startup scene menu will let reviewers choose Desktop or VR Simulation in one Windows app and return to the menu. Complete boundary validation and the final build are deferred to that integration stage; basic checks continue during feature development. The VR scene and startup menu are not implemented yet. See the [development plan](Docs/DevelopmentPlan.md) and [VR simulation specification](Docs/VRSimulationDevelopment.md). Keyboard/mouse simulation does not constitute hardware XR validation.
+後續將在 `Assets/SurfaceForge/Scenes/VRSimulation.unity` 開發鍵鼠 VR 模擬，使用獨立 TerrainData 副本並共用道具資產。兩個場景完成後，才加入啟動場景選單，讓驗收者在同一個 Windows App 選擇桌面版或 VR 模擬版，並可返回選單。完整邊界驗收與正式建置延後到整合階段，各功能開發期間仍進行基本驗證。目前 VR 場景與啟動選單尚未實作。詳細內容請參閱[開發計畫](Docs/DevelopmentPlan.md)與 [VR 模擬規格](Docs/VRSimulationDevelopment.md)。鍵鼠模擬不等於 XR 硬體驗證。
 
-| Stable ID / name | Model size (metres) | Model collider |
+| 穩定 ID／名稱 | 模型尺寸（公尺） | 模型碰撞器 |
 | --- | --- | --- |
-| `cube` / Cube | 1.5 × 1.5 × 1.5 | BoxCollider |
-| `sphere` / Sphere | 1.5 diameter | SphereCollider |
-| `cylinder` / Cylinder | 1.5 diameter × 1.5 height | Convex MeshCollider |
-| `cone` / Cone | 1.5 diameter × 1.5 height | Convex MeshCollider |
+| `cube`／Cube（方塊） | 1.5 × 1.5 × 1.5 | BoxCollider |
+| `sphere`／Sphere（球體） | 直徑 1.5 | SphereCollider |
+| `cylinder`／Cylinder（圓柱） | 直徑 1.5 × 高 1.5 | 凸面 MeshCollider |
+| `cone`／Cone（錐體） | 直徑 1.5 × 高 1.5 | 凸面 MeshCollider |
 
-All prop roots use identity transforms and bottom-centre placement anchors. Their child `Model` is offset upward by 0.75 m. Selection resolves model child colliders to the owning `PlacedProp` root. Source prefabs use Default; the complete hierarchy of each placed instance uses the dedicated PlacedProp layer, separate from Surface. No Rigidbody is present.
+所有道具根節點均使用單位變換（位置與旋轉歸零、縮放為 1），放置錨點位於底部中心；子物件 `Model` 向上偏移 0.75 公尺。選取時會從模型子物件的碰撞器找到所屬 `PlacedProp` 根節點。來源 prefab 使用 Default layer；每個已放置實例的完整階層使用專用 PlacedProp layer，與 Surface 分開。道具不包含 Rigidbody。
 
-Assets under `Assets/SurfaceForge/`:
+`Assets/SurfaceForge/` 下的資產配置：
 
-- `Prefabs/Props/`: Cube, Sphere, Cylinder and Cone prefabs.
-- `Data/Props/`: matching `PropDefinition` assets, with ID, display name, icon and prefab references.
-- `UI/Prefabs/PropCatalogItem.prefab`: reusable icon/name row with a raycastable background.
-- `UI/Icons/` and `Materials/`: matching icons and materials; `Models/Cone.asset` contains the original closed 32-sided cone mesh.
-- `Scripts/`: catalog, gesture routing, placement, TerrainCollider query, placed-prop marker, selection and UGUI context menu. Main explicitly assigns camera, masks, collider, shared preview materials and UI references. Previews use Ignore Raycast with disabled colliders. Selection queries PlacedProp within 500 m; neither query changes the other.
-- `Tests/Editor/`: placement and selection regression tests. Run `SurfaceForge.Tests` from the Test Runner's EditMode tab; fixtures enter Play Mode and wait for real PlayerLoop frames. Placement uses an isolated scene; selection integration opens Main. Save your scene before running tests. Input System test mice and UGUI invocation are distinct from desktop input.
+- `Prefabs/Props/`：Cube、Sphere、Cylinder 與 Cone 的 prefab。
+- `Data/Props/`：對應的 `PropDefinition` 資產，包含 ID、顯示名稱、圖示與 prefab 參照。
+- `UI/Prefabs/PropCatalogItem.prefab`：可重用的圖示／名稱清單項目，背景可接受射線查詢。
+- `UI/Icons/` 與 `Materials/`：對應圖示與材質；`Models/Cone.asset` 保存本專案製作的封閉 32 邊錐體網格。
+- `Scripts/`：道具清單、手勢路由、放置、TerrainCollider 查詢、已放置道具標記、選取與 UGUI 物件旁選單。Main 明確指定攝影機、遮罩、碰撞器、共用預覽材質及 UI 參照。預覽使用 Ignore Raycast layer 並停用碰撞器；選取查詢 PlacedProp layer，距離上限為 500 公尺，選取與地形查詢互不改變對方行為。
+- `Tests/Editor/`：放置與選取的回歸測試。從 Test Runner 的 EditMode 分頁執行 `SurfaceForge.Tests`；測試會進入 Play Mode，並等待實際 PlayerLoop 影格。放置測試使用隔離場景，選取整合測試會開啟 Main，執行前請先儲存場景。Input System 測試滑鼠與 UGUI 事件呼叫不同於實際桌面輸入。
 
-The models use Unity primitives and an original cone mesh; icons and material colors were authored for this project. No external artwork was added.
+模型採用 Unity 基本形狀與本專案製作的錐體網格；圖示與材質配色皆為本專案製作，未加入外部美術素材。
 
-See [M1 validation](Docs/M1Validation.md), [M2 validation](Docs/M2Validation.md), [M3 validation](Docs/M3Validation.md) and [M4 validation](Docs/M4Validation.md) for performed checks and limitations. Desktop Editor Play Mode manual acceptance was confirmed by the user on 2026-11-06 with no issues reported; individual checklist coverage and repetition counts were not separately recorded. No desktop build or recording is included yet. Executable and continuous native-window resize acceptance will be completed during scene-menu integration after both scenes are ready.
+已執行的檢查與限制請參閱 [M1 驗證紀錄](Docs/M1Validation.md)、[M2 驗證紀錄](Docs/M2Validation.md)、[M3 驗證紀錄](Docs/M3Validation.md)與 [M4 驗證紀錄](Docs/M4Validation.md)。使用者已於 2026-11-06 確認桌面 Editor Play Mode 人工驗收沒有問題，未另行記錄逐項覆蓋範圍與重複次數。目前尚未提供 Windows 執行檔或錄影；執行檔驗收及原生視窗連續縮放驗收，將在兩個場景完成後的場景選單整合階段執行。
