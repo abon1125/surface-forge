@@ -8,7 +8,7 @@
 
 最終交付為單一 Windows App：啟動後由場景選單選擇桌面版或 VR 鍵鼠模擬版進行驗收，並可返回選單。先完成桌面 M1–M4 與獨立 VR 模擬場景，再實作選單及整合驗收。交付包含執行檔、實際執行錄影、公開儲存庫連結及可回溯的階段提交紀錄。
 
-VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4–S5、選單與建置尚未完成。
+VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5、選單與建置尚未完成。
 
 ## 2. 專案基準與設計決策
 
@@ -210,8 +210,8 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 | 開發規格與代理規範 | 文件 PR #8 已合併；已同步 S0、S1 實作與檢查狀態 |
 | 公開儲存庫與初始推送 | 已建立，保留 M1–M4 與文件 PR 的開發歷程 |
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
-| 指引線 | 待實作與驗證；已移至 VR 模擬 S4 |
-| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3 已實作（技術驗證見 S3Validation，待使用者精準度與舒適度確認）；S4–S5 待實作與驗證 |
+| 指引線 | S4 已實作專用金色指引與落點圓環；測試與待人工確認見 S4Validation |
+| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3 已實作（技術驗證見 S3Validation，待使用者精準度與舒適度確認）；S4 已實作，驗證見 S4Validation；S5 待實作與驗證 |
 | 場景選單 | 兩版完成後於 I1 實作 |
 | XR | 選配，待確認設備與時間 |
 | 整合建置與完整驗收 | 待執行；原 M6 延後至 I2 |
@@ -247,3 +247,10 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 重新 fetch 確認 PR #13 合併後 origin/main 為 dd90baf，再從同步的 main 建立 codex/vr-simulation-s3。實作右球世界射線、有限距離與命中回饋、UI 距離遮擋及專用輸入模組；清單具有 viewport／content／ScrollRect，點選只回饋四種既有 PropDefinition ID，不建立三維道具。展開完成才接受操作，收合要求即取消；保留 S1 參數與 S2 短按／反向動畫防護。詳細證據、診斷及未測範圍見 [S3 驗證紀錄](S3Validation.md)。尚未獲使用者對射線精準度及操作舒適度的人工確認；S4–S5 與場景選單未開始，本次僅本機提交，不推送或建立 PR。S0–S2 上述歷史記錄與 job 不視為本次重跑。
 
 S3 使用者後續回報 Play Mode 測試正常，並確認縮小 viewport 後滾輪可用；滾輪參數經使用者試玩最終改為 Wheel Units Per Step=3、Scroll Sensitivity=24，取代中途的 120／720。此為整體試玩及滾輪參數確認，不推定所有邊界案例或精準度／舒適度皆已驗收，補記見 S3Validation。
+
+
+### S4 執行狀態（2026-11-06）
+
+從 PR #14 合併後同步的 main 6b6649a 建立 codex/vr-simulation-s4。共用世界 Ray 查詢與放置核心，VR 採來源平面 18 UI 單位且離開項目的拖出門檻、單一擁有權與重新查詢放開；加入專用透明預覽、金色指引及真正地形落點圓環。保留既有操作直線、S1 參數、S2 動畫與 S3 3／24 滾輪設定。S4 測試與桌面／S1–S3 回歸結果、初輪失敗與限制見 [S4 驗證紀錄](S4Validation.md)。尚待使用者放置精準度與操作舒適度確認；只到 S4，不實作 S5 或場景選單。
+
+S4 使用者後續回報目前 Play Mode 測試正常，並授權提交 PR 與 Codex Review；此為整體試玩確認，逐項覆蓋限制見 S4Validation 的補記，不代表 Windows／XR 或所有精準度與舒適度案例驗收。

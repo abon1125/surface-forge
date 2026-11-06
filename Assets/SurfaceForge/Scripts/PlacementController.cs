@@ -14,8 +14,13 @@ namespace SurfaceForge
         private readonly List<RaycastResult> uiHits = new List<RaycastResult>();
         private GameObject preview;
         private PropDefinition definition;
-        private UI.PropItemDragHandler source;
+        private Object source;
+        private bool worldGesture;
         public bool IsDragging => preview != null;
+        public Transform Preview => preview ? preview.transform : null;
+        public bool HasValidPose { get; private set; }
+        public Pose PreviewPose { get; private set; }
+        public event System.Action Finished;
         public event System.Action GestureStarted;
         public int LastConsumedFrame { get; private set; } = -1;
 
@@ -28,15 +33,29 @@ namespace SurfaceForge
 
         public bool Begin(UI.PropItemDragHandler owner, PropDefinition value, Vector2 position)
         {
+            if (!BeginCore(owner, value, false)) return false;
+            UpdatePreview(position);
+            return true;
+        }
+
+        public bool BeginWorld(Object owner, PropDefinition value, Ray ray, bool overUI)
+        {
+            if (!owner || !BeginCore(owner, value, true)) return false;
+            UpdateWorld(owner, ray, overUI);
+            return true;
+        }
+
+        private bool BeginCore(Object owner, PropDefinition value, bool world)
+        {
             if (!isActiveAndEnabled || IsDragging || !value || !value.Prefab || !surfaceQuery) return false;
             ConsumeGesture();
             source = owner;
+            worldGesture = world;
             definition = value;
             preview = Instantiate(value.Prefab);
             preview.name = "Placement Preview";
             foreach (var t in preview.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = 2;
             foreach (var collider in preview.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
-            UpdatePreview(position);
             return true;
         }
 
@@ -58,11 +77,24 @@ namespace SurfaceForge
 
         public void UpdatePreview(Vector2 position)
         {
-            if (!IsDragging) return;
+            if (!IsDragging || worldGesture) return;
             var overUI = IsOverUI(position);
             var valid = TryPose(position, out var pose);
+            ApplyPreview(overUI, valid, valid ? pose : new Pose(surfaceQuery.InvalidPosition(position), Quaternion.identity));
+        }
+
+        public void UpdateWorld(Object owner, Ray ray, bool overUI)
+        {
+            if (source != owner || !worldGesture || !IsDragging) return;
+            var valid = surfaceQuery.TryGetPose(ray, out var pose) && !overUI;
+            ApplyPreview(overUI, valid, valid ? pose : new Pose(surfaceQuery.InvalidPosition(ray), Quaternion.identity));
+        }
+
+        private void ApplyPreview(bool overUI, bool valid, Pose pose)
+        {
+            HasValidPose = valid;
+            PreviewPose = pose;
             preview.SetActive(!overUI);
-            if (!valid) pose = new Pose(surfaceQuery.InvalidPosition(position), Quaternion.identity);
             preview.transform.SetPositionAndRotation(pose.position, pose.rotation);
             foreach (var renderer in preview.GetComponentsInChildren<Renderer>(true))
             {
@@ -74,9 +106,21 @@ namespace SurfaceForge
 
         public void End(UI.PropItemDragHandler owner, Vector2 releasePosition)
         {
-            if (source != owner || !IsDragging) return;
+            if (source != owner || worldGesture || !IsDragging) return;
             // Re-query release coordinates and all UI; never commit a cached preview pose.
-            if (TryPose(releasePosition, out var pose))
+            Commit(TryPose(releasePosition, out var pose), pose);
+        }
+
+        public void EndWorld(Object owner, Ray releaseRay, bool overUI)
+        {
+            if (source != owner || !worldGesture || !IsDragging) return;
+            var valid = surfaceQuery.TryGetPose(releaseRay, out var pose);
+            Commit(!overUI && valid, pose);
+        }
+
+        private void Commit(bool valid, Pose pose)
+        {
+            if (valid)
             {
                 var placed = Instantiate(definition.Prefab, pose.position, pose.rotation);
                 foreach (var t in placed.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = LayerMask.NameToLayer("PlacedProp");
@@ -85,14 +129,15 @@ namespace SurfaceForge
             Cancel();
         }
 
-        public void Cancel(UI.PropItemDragHandler owner)
+        public void Cancel(Object owner)
         {
             if (source == owner) Cancel();
         }
 
         public void Cancel()
         {
-            if (IsDragging) LastConsumedFrame = Time.frameCount;
+            bool wasDragging = IsDragging;
+            if (wasDragging) LastConsumedFrame = Time.frameCount;
             if (preview)
             {
                 preview.SetActive(false);
@@ -101,13 +146,17 @@ namespace SurfaceForge
             }
             preview = null;
             definition = null;
-            if (source) source.PlacementCancelled();
+            HasValidPose = false;
+            PreviewPose = default;
+            if (source is UI.PropItemDragHandler desktop && desktop) desktop.PlacementCancelled();
             source = null;
+            worldGesture = false;
+            if (wasDragging) Finished?.Invoke();
         }
 
         private void Update()
         {
-            if (!IsDragging) return;
+            if (!IsDragging || worldGesture) return;
             var mouse = Mouse.current;
             if ((Keyboard.current?.escapeKey.wasPressedThisFrame ?? false) || mouse == null ||
                 mouse.position.ReadValue().x < 0 || mouse.position.ReadValue().y < 0 ||
@@ -116,6 +165,7 @@ namespace SurfaceForge
         }
         private void LateUpdate()
         {
+            if (worldGesture) return;
             // UI EndDrag runs during Update. Only then cancel a release that UI did not deliver.
             if (IsDragging && !(Mouse.current?.leftButton.isPressed ?? false)) Cancel();
             else if (IsDragging) UpdatePreview(Mouse.current.position.ReadValue());

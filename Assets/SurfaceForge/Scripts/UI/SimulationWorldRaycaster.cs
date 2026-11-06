@@ -16,6 +16,8 @@ namespace SurfaceForge.UI
         public Camera ViewCamera => viewCamera;
         public Transform RayOrigin => rayOrigin;
         public float MaxDistance => maxDistance;
+        public event System.Action Unavailable;
+        private void OnDisable() => Unavailable?.Invoke();
         public struct Hit
         {
             public bool HasHit;
