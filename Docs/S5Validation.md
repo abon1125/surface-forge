@@ -1,5 +1,7 @@
 # S5 射線選取與刪除驗證紀錄
 
+> 2026-11-07 操作與驗證規則釐清：本文將 Unity 內自動測試交由使用者執行的舊限制，已由 [AGENT.md](../AGENT.md#驗證與完成定義) 取代。代理可透過 Unity Skills Editor API 或命令列執行編譯及 Editor／EditMode／PlayMode 自動測試，包括測試所需的進出 Play Mode；禁止使用 Codex Computer Use 操作 Unity 圖形介面。下文保留當時測試未執行及使用者 Test Runner 操作步驟的歷史紀錄，不代表目前禁止代理執行，也不改列通過。使用者親自點擊、拖曳、移動及畫面、手感與功能的人工驗收仍須另行回報；未回報項目仍為「待使用者驗證」，自動測試通過不能代替人工驗收。
+
 日期：2026-11-06–07（Asia/Taipei）。Unity 6000.3.25f1／Windows Editor，沿用 URP、Input System、UGUI 與 DOTween 1.3.045，未新增 XR 或升級套件。
 
 > 最新狀態：本文末段「水平繞行選單」取代先前定位規則；本次待使用者驗證。歷史通過結果不代表新版本通過。

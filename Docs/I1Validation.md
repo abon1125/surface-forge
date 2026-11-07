@@ -1,5 +1,7 @@
 # I1 啟動場景選單與返回入口
 
+> 2026-11-07 操作與驗證規則釐清：本文將 Unity 內自動測試交由使用者執行的舊限制，已由 [AGENT.md](../AGENT.md#驗證與完成定義) 取代。代理可透過 Unity Skills Editor API 或命令列執行編譯及 Editor／EditMode／PlayMode 自動測試，包括測試所需的進出 Play Mode；禁止使用 Codex Computer Use 操作 Unity 圖形介面。下文保留當時測試未執行及使用者 Test Runner 操作步驟的歷史紀錄，不代表目前禁止代理執行，也不改列通過。使用者親自點擊、拖曳、移動及畫面、手感與功能的人工驗收仍須另行回報；未回報項目仍為「待使用者驗證」，自動測試通過不能代替人工驗收。
+
 日期：2026-11-07。基準為 PR #17 合併後的 `e315510da4e6c29cc4d9828e9e8f06478f09dd31`，分支 `codex/scene-menu-i1`。本紀錄只涵蓋 I1；S5 歷史結果見 [S5Validation.md](S5Validation.md)，不代表本版重跑。
 
 > 下方原始紀錄對應 `6191902`，保留當時的 Single 載入、測試名稱與檢查結果。使用者後續確認的 additive Loading 已取代該載入方案，目前實作與待驗證項目以末節「Loading 補充」為準。
