@@ -238,6 +238,7 @@ namespace SurfaceForge.Tests
             yield return Open();var left=Field<Canvas>(raycaster,"menuCanvas");
             var leftMenu=left.transform.parent.GetComponent<SimulationPropMenu>();leftMenu.enabled=false;
             context.enabled=false;module.enabled=false;selection.enabled=false;left.gameObject.SetActive(true);canvas.gameObject.SetActive(true);
+            var contextGroup=canvas.GetComponent<CanvasGroup>();contextGroup.alpha=1;contextGroup.blocksRaycasts=true;contextGroup.interactable=true;
             var group=left.GetComponent<CanvasGroup>();group.blocksRaycasts=true;group.alpha=1;
             var camera=raycaster.ViewCamera;var origin=camera.transform.position;
             var direction=camera.transform.forward;
@@ -302,6 +303,31 @@ namespace SurfaceForge.Tests
             Assert.That(Object.FindFirstObjectByType<SimulationSelectionController>().Selected,Is.Null);
             Assert.That(Object.FindFirstObjectByType<SimulationContextMenuView>().Target,Is.Null);
         }
+        [UnityTest] public IEnumerator TiltedPropMenuOrbitsItsLocalYAxis()
+        {
+            var prop = Spawn(0);
+            prop.transform.rotation = Quaternion.Euler(25, 35, 20);
+            foreach (var collider in prop.GetComponentsInChildren<Collider>()) collider.isTrigger = true;
+            Physics.SyncTransforms();
+            var camera = raycaster.ViewCamera;
+            var original = camera.transform.position;
+            var rect = (RectTransform)Field<Canvas>(context,"canvas").transform;
+            var axis = prop.transform.up;
+            var center = prop.transform.TransformPoint(new Vector3(0,.75f,0));
+            float expectedRadius = Mathf.Sqrt(2 * .75f * .75f) + .15f;
+            for (int angle = 0; angle < 360; angle += 45)
+            {
+                var direction = Quaternion.AngleAxis(angle, axis) * prop.transform.forward;
+                camera.transform.position = center + direction * 5 + axis * 2;
+                selection.Select(prop); Call(context,"RefreshPosition");
+                var offset = rect.position - center;
+                Assert.That(Vector3.Dot(offset, axis), Is.EqualTo(.45f).Within(.001f));
+                Assert.That(Vector3.Distance(Vector3.ProjectOnPlane(offset, axis), direction * expectedRadius), Is.LessThan(.001f));
+            }
+            camera.transform.position = original; selection.ClearSelection(); Object.Destroy(prop.gameObject);
+            yield return Frames();
+        }
+
         [UnityTest] public IEnumerator OrbitMenuStaysOnViewerSideWithStableHeightAndSize()
         {
             var camera=raycaster.ViewCamera;var rect=(RectTransform)Field<Canvas>(context,"canvas").transform;

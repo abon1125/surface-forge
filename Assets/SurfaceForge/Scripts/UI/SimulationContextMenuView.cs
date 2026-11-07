@@ -18,16 +18,17 @@ namespace SurfaceForge.UI
         private float widthRatio = .5f;
         [SerializeField, Min(0), Tooltip("水平外接圓以外的間距，相對物件最大邊長。")]
         private float orbitGapRatio = .1f;
+        [SerializeField] private ContextMenuFade fade = new ContextMenuFade();
         private Vector3 lastOrbitDirection;
         public PlacedProp Target { get; private set; }
-        public bool IsVisible => canvas && canvas.gameObject.activeInHierarchy;
+        public bool IsVisible => fade.IsOpen && canvas && canvas.gameObject.activeInHierarchy;
         public event System.Action DeleteRequested;
         public event System.Action Unavailable;
-        private void OnEnable() { if (deleteButton) deleteButton.onClick.AddListener(RequestDelete); Hide(); }
+        private void OnEnable() { fade.Initialize(gameObject, canvas ? canvas.gameObject : null); if (deleteButton) deleteButton.onClick.AddListener(RequestDelete); Hide(); }
         private void OnDisable()
         {
             if (deleteButton) deleteButton.onClick.RemoveListener(RequestDelete);
-            Hide(); Unavailable?.Invoke();
+            Hide(); fade.SnapClosed(); Unavailable?.Invoke();
         }
         private void RequestDelete() { if (PropSelectionState.IsValid(Target) && IsVisible) DeleteRequested?.Invoke(); }
         public void Show(PlacedProp target)
@@ -41,45 +42,68 @@ namespace SurfaceForge.UI
         {
             Target = null;
             lastOrbitDirection = Vector3.zero;
-            if (targetName) targetName.text = "";
-            if (canvas) canvas.gameObject.SetActive(false);
+            fade.SetVisible(false);
         }
+        private void OnDestroy() => fade.SnapClosed();
+        private void OnApplicationFocus(bool focused) { if (!focused) { Hide(); fade.SnapClosed(); } }
+        private void OnApplicationPause(bool paused) { if (paused) { Hide(); fade.SnapClosed(); } }
         private void LateUpdate() => RefreshPosition();
         private void RefreshPosition()
         {
             if (!canvas) return;
             if (!PropSelectionState.IsValid(Target)) { Hide(); return; }
-            if (!viewCamera || !isActiveAndEnabled) { canvas.gameObject.SetActive(false); return; }
+            if (!viewCamera || !isActiveAndEnabled) { fade.SnapClosed(); return; }
             // 只以有效碰撞器計算，不將 prefab 的底部錨點額外納入包圍盒。
-            var bounds = new Bounds(Target.transform.position, Vector3.zero);
+            var bounds = new Bounds(Vector3.zero, Vector3.zero);
             bool hasBounds = false;
             foreach (var collider in Target.GetComponentsInChildren<Collider>())
             {
                 if (!collider.enabled || !collider.gameObject.activeInHierarchy) continue;
-                if (!hasBounds) { bounds = collider.bounds; hasBounds = true; }
-                else bounds.Encapsulate(collider.bounds);
+                Bounds local;
+                if (collider is BoxCollider box) local = new Bounds(box.center, box.size);
+                else if (collider is SphereCollider sphere) local = new Bounds(sphere.center, Vector3.one * sphere.radius * 2);
+                else if (collider is MeshCollider mesh && mesh.sharedMesh) local = mesh.sharedMesh.bounds;
+                else
+                {
+                    // 其他 Collider 保守使用世界包圍盒，轉回物件座標。
+                    local = collider.bounds;
+                }
+                for (int i = 0; i < 8; i++)
+                {
+                    var point = local.center + Vector3.Scale(local.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    bool supported = collider is BoxCollider || collider is SphereCollider || (collider is MeshCollider m && m.sharedMesh);
+                    point = Target.transform.InverseTransformPoint(supported ? collider.transform.TransformPoint(point) : point);
+                    if (!hasBounds) { bounds = new Bounds(point, Vector3.zero); hasBounds = true; }
+                    else bounds.Encapsulate(point);
+                }
             }
             var rect = (RectTransform)canvas.transform;
             rect.sizeDelta = size;
-            float extent = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+            var dimensions = Vector3.Scale(bounds.size, new Vector3(Target.transform.TransformVector(Vector3.right).magnitude,
+                Target.transform.TransformVector(Vector3.up).magnitude, Target.transform.TransformVector(Vector3.forward).magnitude));
+            float extent = Mathf.Max(dimensions.x, dimensions.y, dimensions.z);
             // 零尺寸目標使用 1 mm 安全下限；不依觀看距離調整尺寸或位置。
             float width = Mathf.Max(.001f, extent * Mathf.Max(.001f, widthRatio));
             rect.localScale = Vector3.one * (width / Mathf.Max(1, size.x));
-            var towardViewer = Vector3.ProjectOnPlane(viewCamera.transform.position - bounds.center, Vector3.up);
+            // 在物件本地 XZ 平面繞行，Y 軸隨斜坡上的物件傾斜。
+            var center = Target.transform.TransformPoint(bounds.center);
+            var axis = Target.transform.up;
+            var towardViewer = Vector3.ProjectOnPlane(viewCamera.transform.position - center, axis);
+            lastOrbitDirection = Vector3.ProjectOnPlane(lastOrbitDirection, axis).normalized;
             if (towardViewer.sqrMagnitude > .000001f) lastOrbitDirection = towardViewer.normalized;
             else if (lastOrbitDirection.sqrMagnitude < .000001f)
             {
-                towardViewer = Vector3.ProjectOnPlane(-viewCamera.transform.forward, Vector3.up);
+                towardViewer = Vector3.ProjectOnPlane(-viewCamera.transform.forward, axis);
                 // 垂直觀看時 forward 沒有水平分量，改由 camera up 定義後方。
                 if (towardViewer.sqrMagnitude < .000001f)
-                    towardViewer = Vector3.ProjectOnPlane(viewCamera.transform.up, Vector3.up);
-                lastOrbitDirection = towardViewer.sqrMagnitude > .000001f ? towardViewer.normalized : Vector3.back;
+                    towardViewer = Vector3.ProjectOnPlane(viewCamera.transform.up, axis);
+                lastOrbitDirection = towardViewer.sqrMagnitude > .000001f ? towardViewer.normalized : -Target.transform.forward;
             }
-            var side = Vector3.Cross(Vector3.up, lastOrbitDirection);
-            float radius = new Vector2(bounds.extents.x, bounds.extents.z).magnitude;
-            rect.position = bounds.center + Vector3.up * (bounds.size.y * offsetRatio.y)
-                + side * (bounds.size.x * offsetRatio.x)
-                + lastOrbitDirection * (radius + extent * Mathf.Max(0, orbitGapRatio) + bounds.size.z * offsetRatio.z);
+            var side = Vector3.Cross(axis, lastOrbitDirection);
+            float radius = new Vector2(dimensions.x, dimensions.z).magnitude * .5f;
+            rect.position = center + axis * (dimensions.y * offsetRatio.y)
+                + side * (dimensions.x * offsetRatio.x)
+                + lastOrbitDirection * (radius + extent * Mathf.Max(0, orbitGapRatio) + dimensions.z * offsetRatio.z);
             var forward = rect.position - viewCamera.transform.position;
             if (forward.sqrMagnitude > .000001f)
             {
@@ -89,7 +113,7 @@ namespace SurfaceForge.UI
                     ? Vector3.forward : Vector3.up;
                 rect.rotation = Quaternion.LookRotation(forward, up);
             }
-            canvas.gameObject.SetActive(true);
+            fade.SetVisible(true);
         }
     }
 }

@@ -102,6 +102,7 @@ namespace SurfaceForge.Tests
                 Assert.That(selection.Selected, Is.SameAs(second));
                 yield return Click(camera.pixelRect.min + Vector2.one * 10);
                 Assert.That(selection.Selected, Is.Null);
+                yield return new WaitForSecondsRealtime(.2f);
                 Assert.That(Field<RectTransform>(menu,"panel").gameObject.activeSelf, Is.False);
                 yield return Click(HitPoint(first));
                 var button = Field<Button>(menu,"deleteButton");

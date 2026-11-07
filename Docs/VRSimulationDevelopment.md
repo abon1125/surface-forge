@@ -298,3 +298,9 @@ SimulationContextMenuView 的 Offset Ratio 預設與場景值皆改為 (0,0.3,0)
 ### QA 說明文字更新（2026-11-07）
 
 依後續回饋，頂端說明移除滾輪文字，改為「左鍵：按住項目拖出，放開放置｜點選物件後，點 DELETE 刪除」。VR 清單滾輪功能本身保留；本次只改說明，不改輸入或選單定位。前節列出滾輪的文字為上一版歷史。畫面仍待使用者驗證。
+
+### QA 刪除選單動畫與物件 Y 軸（2026-11-07）
+
+兩版刪除選單使用 ContextMenuFade 的 DOTween 淡入 0.18 秒 OutCubic、淡出 0.12 秒 InCubic，採 unscaled time，可在兩版選單 View 的 Fade Inspector 設定時間與 Ease。關閉立即清除目標並停用 CanvasGroup 互動／射線，保留文字及最後位置直到淡出完畢才停用圖像；快速重開從當前 alpha 接續。失焦、暫停、停用、銷毀立即清理自己的 Tween，不呼叫 KillAll。淡入時可互動，定位與尺寸不隨動畫改變。
+
+VR 繞行由世界 Y 軸改為所選物件 transform.up，位於物件本地 XZ 平面；高度沿物件 Y 軸，觀看者方向先投影到該平面，方向退化時沿用投影後方向或攝影機方向備援。以有效 Collider 的本地幾何包圍盒轉至物件座標，避免世界 AABB 隨傾斜膨脹而改變半徑；目前四種道具支援 Box／Sphere／MeshCollider，其他 Collider 保守轉換世界包圍盒。Offset Ratio=(0,0.3,0)、Width Ratio=0.5、Orbit Gap Ratio=0.1 不變，面板文字仍面向觀看者並維持世界向上。此節取代前文世界水平繞行規則；既有歷史結果不視為本次重跑。動畫、斜坡及所有 Unity 內測試仍待使用者驗證。

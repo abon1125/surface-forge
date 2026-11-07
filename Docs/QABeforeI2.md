@@ -80,3 +80,27 @@
 7. 使用者可執行 Test Runner → EditMode → SurfaceForge.Tests.TerrainOverviewCameraTests，及既有 PlacementTests／SelectionTests 回歸；先儲存場景。本次均未執行，不取代 I2。
 
 本輪已檢查：Editor API 回傳完整新說明文字、Overview Camera 的 placement／navigation 已接線；場景區塊比對確認 Main 僅攝影機設定區塊變動、VR 僅說明 Text 區塊變動，無新增／刪除既有區塊，兩份 Main 新參照可解析。兩個 Unity 外專案以 `dotnet build <專案> --no-restore --verbosity quiet -m:1 -p:UseSharedCompilation=false` 編譯成功，各 0 警告／0 錯誤；最終測試檔另編譯成功。Markdown 本機檔案連結與差異檢查通過；Unity 序列化空白依既有方式保留。場景作者需先離開 Play Mode 並儲存未儲存場景，這是編輯保護，不是 Unity 測試結果。既有材質差異仍未提交。
+
+## 後續 QA：兩版刪除選單動畫與 VR 繞行軸（2026-11-07）
+
+基準 3b8a9b90c5c36332a0d91113daf4337207133ae5，工作區原有 SimulationPreviewValid.mat 差異保留排除。本輪不修改場景／資產；新增序列化 Fade 設定使用程式預設值，CanvasGroup 於各場景自身的選單初始化時取得／建立，不跨場景保存。
+
+| 項目 | 重現／原因 | 修正／預期 |
+| --- | --- | --- |
+| 兩版開合動畫 | 選取或清除道具，選單直接顯示／停用 | 共用 DOTween alpha 淡入 0.18 秒 OutCubic、淡出 0.12 秒 InCubic，使用 unscaled time；Fade Inspector 可調時間與 Ease |
+| VR 繞行軸 | 道具貼合斜坡後 Y 軸傾斜，原投影／高度／半徑使用世界 Y 與世界 AABB | 改在物件本地 XZ 平面、沿 transform.up 繞行，尺寸與中心由物件座標包圍盒計算；保留前側偏上、朝向觀看者與遮擋 |
+
+關閉當下 Target 與有效選取立即清除，CanvasGroup.interactable／blocksRaycasts=false；文字與最後位置只保留到淡出完成，不能繼續刪除。重新開啟從目前 alpha 反向，切換有效物件維持已開啟進度並立即更新目標文字／位置。停用、卸載、失焦／暫停立即 Kill 自己的 Tween 並歸零，不靠 Safe Mode 或 KillAll 清理。淡入期間可點擊，動畫不改幾何尺寸；桌面原有畫布邊界夾限、VR 右鍵保留選取及 UI 遮擋規則不變。VR IsVisible 表示目前開啟且有互動意圖，淡出期間雖仍有圖像但回傳 false。
+
+必要回歸已加入、全部未執行：ContextMenuFadeTests（暫停時間、快速反向、撤銷互動與立即清理）；SimulationSelectionTests 新增傾斜立方體八方位本地 Y 軸檢查；SelectionTests 等待關閉動畫完成後再判定圖像停用，VR 多 Canvas 人工配置案例明確設定 CanvasGroup。這些測試不代替真實滑鼠／射線及畫面驗收。
+
+使用者驗證（全部待執行）：
+
+1. Main、VR 各放置並選取物件，預期約 0.18 秒淡入；點空白／Esc／刪除時約 0.12 秒淡出，關閉立即不可點 DELETE，僅刪原選中實例。
+2. 快速選取→空白→再選取，及連續切換物件；預期不閃回起始透明度、不重複建立 UI、不讓舊淡出回呼關掉新目標。刪除後可再次正常放置與選取。
+3. 在斜坡放置四種道具並選取，以 WASD 繞行並右鍵觀看；預期軌道沿道具自己的 Y 軸、平行於本地 XZ 平面，高度沿該軸保持固定。平地仍水平繞行，文字面向觀看者。其他道具／地形遮擋仍不可穿透。
+4. 淡入或淡出中失焦／暫停／停用選單，再恢復或返回重入；預期無殘影、Tween 回呼錯誤、幽靈射線或舊選取。timeScale=0 時動畫仍可完成。
+5. 測 16:9、4:3、寬螢幕／縮放，桌面邊界選單與滾輪縮放後仍可用；VR 左手面板／放置預覽／取消／返回維持。相機位於物件 Y 軸附近時不因投影零向量出現無效座標。
+6. 使用者可在 Test Runner → EditMode 執行 ContextMenuFadeTests、SimulationSelectionTests（八項）、SelectionTests；先儲存場景。此為基本回歸，非 I2 完整整合、Windows 或 XR 驗收。
+
+本輪已檢查：Unity 外 Assembly-CSharp-Editor.csproj 與 SurfaceForge.Tests.csproj 以既有單節點、停用共用編譯程序的指令成功，各 0 警告／0 錯誤；最後測試配置修改另編譯成功。Editor 資產匯入 job 9f334490 completed、errorCount=0，僅為程式匯入，不是測試。Main／VR 場景檔與本輪 HEAD 逐位元組正規化比對相同；Markdown 本機檔案連結與差異檢查通過。新增腳本及其 meta 一同提交，既有預覽材質差異仍排除。人工與 Test Runner 皆未執行，故無動畫舒適度、斜坡繞行或實際射線互動通過宣稱。

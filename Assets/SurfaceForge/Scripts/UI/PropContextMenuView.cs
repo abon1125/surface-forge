@@ -13,19 +13,21 @@ namespace SurfaceForge.UI
         [SerializeField] private Button deleteButton;
         [SerializeField] private Vector2 offset = new Vector2(24, 24);
         [SerializeField] private float padding = 12;
+        [SerializeField] private ContextMenuFade fade = new ContextMenuFade();
         public PlacedProp Target { get; private set; }
         public event System.Action DeleteRequested;
         public event System.Action Unavailable;
         private readonly Vector3[] corners = new Vector3[4];
 
-        private void OnEnable() { if (deleteButton) deleteButton.onClick.AddListener(RequestDelete); Hide(); }
+        private void OnEnable() { fade.Initialize(gameObject, panel ? panel.gameObject : null); if (deleteButton) deleteButton.onClick.AddListener(RequestDelete); Hide(); }
         private void OnDisable()
         {
             if (deleteButton) deleteButton.onClick.RemoveListener(RequestDelete);
             Hide();
+            fade.SnapClosed();
             Unavailable?.Invoke();
         }
-        private void RequestDelete() { if (Target) DeleteRequested?.Invoke(); }
+        private void RequestDelete() { if (Target && fade.IsOpen) DeleteRequested?.Invoke(); }
         public void Show(PlacedProp target)
         {
             Target = target;
@@ -35,29 +37,30 @@ namespace SurfaceForge.UI
         public void Hide()
         {
             Target = null;
-            if (targetName) targetName.text = "";
-            if (panel) panel.gameObject.SetActive(false);
+            fade.SetVisible(false);
         }
 
         // Canvas rendering follows all camera LateUpdates, including viewport fitting.
         private void OnCanvasWillRender() => RefreshPosition();
         private void Awake() => Canvas.willRenderCanvases += OnCanvasWillRender;
-        private void OnDestroy() => Canvas.willRenderCanvases -= OnCanvasWillRender;
+        private void OnDestroy() { fade.SnapClosed(); Canvas.willRenderCanvases -= OnCanvasWillRender; }
+        private void OnApplicationFocus(bool focused) { if (!focused) { Hide(); fade.SnapClosed(); } }
+        private void OnApplicationPause(bool paused) { if (paused) { Hide(); fade.SnapClosed(); } }
         private void LateUpdate() => RefreshPosition();
 
         private void RefreshPosition()
         {
             if (!isActiveAndEnabled || !panel) return;
             if (!Target || !Target.isActiveAndEnabled) { Hide(); return; }
-            if (!canvas || !sceneCamera) { panel.gameObject.SetActive(false); return; }
+            if (!canvas || !sceneCamera) { fade.SnapClosed(); return; }
             var screen = sceneCamera.WorldToScreenPoint(Target.transform.position);
             if (screen.z < sceneCamera.nearClipPlane || screen.z > sceneCamera.farClipPlane ||
                 !sceneCamera.pixelRect.Contains(new Vector2(screen.x, screen.y)))
-            { panel.gameObject.SetActive(false); return; }
+            { fade.SnapClosed(); return; }
             var root = (RectTransform)panel.parent;
             var uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screen, uiCamera, out var point))
-            { panel.gameObject.SetActive(false); return; }
+            { fade.SnapClosed(); return; }
             var available = root.rect;
             available.xMin += padding; available.yMin += padding;
             available.xMax -= padding; available.yMax -= padding;
@@ -70,7 +73,7 @@ namespace SurfaceForge.UI
             }
             // A uniformly scaled panel keeps the full button reachable in small viewports.
             var scale = Mathf.Min(1, available.width / panel.rect.width, available.height / panel.rect.height);
-            if (scale <= 0) { panel.gameObject.SetActive(false); return; }
+            if (scale <= 0) { fade.SnapClosed(); return; }
             panel.localScale = Vector3.one * scale;
             var size = panel.rect.size * scale;
             var pivot = panel.pivot;
@@ -82,7 +85,7 @@ namespace SurfaceForge.UI
             point.x = Mathf.Clamp(point.x, available.xMin + size.x * pivot.x, available.xMax - size.x * (1 - pivot.x));
             point.y = Mathf.Clamp(point.y, available.yMin + size.y * pivot.y, available.yMax - size.y * (1 - pivot.y));
             panel.localPosition = new Vector3(point.x, point.y, 0);
-            panel.gameObject.SetActive(true);
+            fade.SetVisible(true);
         }
     }
 }
