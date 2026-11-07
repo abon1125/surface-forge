@@ -12,7 +12,8 @@ namespace SurfaceForge
         [SerializeField] private UI.PropContextMenuView menu;
         [SerializeField] private LayerMask placedPropMask;
         [SerializeField, Min(1)] private float maxRayDistance = 500;
-        public PlacedProp Selected { get; private set; }
+        private readonly PropSelectionState state = new PropSelectionState();
+        public PlacedProp Selected => state.Selected;
         private bool pressed, rejected, pending, clearForDrag, released, releaseRejected;
         private Vector2 pressPosition, releasePosition, eventReleasePosition;
         private int pressFrame, releaseFrame, pendingPressFrame, eventPressFrame;
@@ -54,7 +55,7 @@ namespace SurfaceForge
 
         public void ClearSelection()
         {
-            Selected = null;
+            state.Clear();
             if (menu) menu.Hide();
         }
 
@@ -153,17 +154,16 @@ namespace SurfaceForge
             PlacedProp target = null;
             if (Physics.Raycast(sceneCamera.ScreenPointToRay(position), out var hit,
                 maxRayDistance, placedPropMask, QueryTriggerInteraction.Ignore))
-                target = hit.collider.GetComponentInParent<PlacedProp>();
-            if (!target || !target.isActiveAndEnabled || !target.Definition) { ClearSelection(); return; }
-            Selected = target;
+                target = PropSelectionState.Resolve(hit.collider);
+            if (!PropSelectionState.IsValid(target)) { ClearSelection(); return; }
+            state.Select(target);
             menu.Show(target);
         }
 
         private void DeleteSelected()
         {
-            var target = Selected;
-            Interrupt(); // Clear references before destruction and before another button invocation.
-            if (target) { target.gameObject.SetActive(false); Destroy(target.gameObject); }
+            // 先清除呈現與輸入暫存，再由共用核心清除目標並刪除。
+            state.DeleteSelected(Interrupt);
         }
 
         private void OnApplicationFocus(bool focused) { if (!focused) Interrupt(); }

@@ -11,6 +11,7 @@ namespace SurfaceForge.UI
         [SerializeField] private Transform rayOrigin;
         [SerializeField] private Transform ignoredPlayerRoot;
         [SerializeField] private Canvas menuCanvas;
+        [SerializeField] private Canvas contextCanvas;
         [SerializeField] private LayerMask sceneMask = ~4;
         [SerializeField, Min(0.1f)] private float maxDistance = 100;
         public Camera ViewCamera => viewCamera;
@@ -22,6 +23,7 @@ namespace SurfaceForge.UI
         {
             public bool HasHit;
             public GameObject UI;
+            public Collider Collider;
             public Vector3 Point, Normal;
             public float Distance;
         }
@@ -39,12 +41,18 @@ namespace SurfaceForge.UI
             {
                 if (ignoredPlayerRoot && hit.transform.IsChildOf(ignoredPlayerRoot)) continue;
                 if (hit.distance >= result.Distance) continue;
-                result = new Hit { HasHit = true, Distance = hit.distance, Point = hit.point, Normal = hit.normal };
+                result = new Hit { HasHit = true, Distance = hit.distance, Point = hit.point, Normal = hit.normal, Collider = hit.collider };
             }
-            if (!menuCanvas || !menuCanvas.isActiveAndEnabled) return result;
+            QueryCanvas(ray, menuCanvas, ref result);
+            QueryCanvas(ray, contextCanvas, ref result);
+            return result;
+        }
+        private void QueryCanvas(Ray ray, Canvas canvas, ref Hit result)
+        {
+            if (!canvas || !canvas.isActiveAndEnabled) return;
             int depth = -1;
             // 同一 Canvas 的 graphic depth 對應最上層顯示順序。
-            var graphics = GraphicRegistry.GetGraphicsForCanvas(menuCanvas);
+            var graphics = GraphicRegistry.GetGraphicsForCanvas(canvas);
             for (int i = 0; i < graphics.Count; i++)
             {
                 Graphic graphic = graphics[i];
@@ -63,7 +71,6 @@ namespace SurfaceForge.UI
                 depth = graphic.depth;
                 result = new Hit { HasHit = true, UI = graphic.gameObject, Distance = distance, Point = point, Normal = -plane.forward };
             }
-            return result;
         }
     }
 }

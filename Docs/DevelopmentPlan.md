@@ -8,7 +8,7 @@
 
 最終交付為單一 Windows App：啟動後由場景選單選擇桌面版或 VR 鍵鼠模擬版進行驗收，並可返回選單。先完成桌面 M1–M4 與獨立 VR 模擬場景，再實作選單及整合驗收。交付包含執行檔、實際執行錄影、公開儲存庫連結及可回溯的階段提交紀錄。
 
-VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5、選單與建置尚未完成。
+VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5 已實作，技術驗證與待人工確認見 [S5 驗證紀錄](S5Validation.md)；選單與建置尚未完成。
 
 ## 2. 專案基準與設計決策
 
@@ -17,7 +17,7 @@ VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)�
 | Unity | 現有專案版本 6000.3.25f1，開發期間不任意升級 |
 | 渲染 | 現有 URP 17.3.0 |
 | 輸入 | 現有 Input System 1.20.0 |
-| 介面 | 採 UGUI，搭配 EventSystem 與 InputSystemUIInputModule |
+| 介面 | 採 UGUI 與單一 EventSystem；桌面使用 InputSystemUIInputModule，VR 使用專用世界射線模組 |
 | 主要交付平台 | Windows x64 |
 | 初始視窗 | 建議 1280 × 720，啟用 Resizable Window |
 | 曲面 | 使用 Unity Terrain 製作有限起伏地形，Terrain 與 TerrainCollider 參照同一份 TerrainData |
@@ -103,8 +103,10 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 | PlacementController | 管理 Idle／Dragging 狀態、預覽生命週期、提交與取消 |
 | SurfacePlacementQuery | 射線查詢 Surface layer 上的 TerrainCollider，回傳命中點與法線 |
 | PlacedProp | 標記正式道具與選單定位錨點 |
-| PropSelectionController | 處理選取與清除目標 |
-| PropContextMenuView | 物件旁選單、螢幕邊界限制及刪除操作 |
+| PropSelectionState | 共用有效實例、子碰撞器解析、目標及單次刪除規則 |
+| PropSelectionController | 桌面輸入及延後選取，轉接共用核心 |
+| PropContextMenuView | 桌面物件旁選單、螢幕邊界限制及刪除操作 |
+| SimulationSelectionController／SimulationContextMenuView | VR 選取轉接與世界空間名稱／刪除選單 |
 | PlacementGuideView（VR 模擬） | 指引線與落點標記，隨 VR 拖曳狀態顯示 |
 
 建議放在 `Assets/SurfaceForge/` 下，依 `Scenes/`、`Scripts/`、`Prefabs/Props/`、`Data/Props/`、`Terrain/`、`Materials/`、`UI/` 與 `Tests/` 分類。`Terrain/` 保存 TerrainData 與使用的 TerrainLayer 等資產；地形本身透過 Editor 製作，不需要專用生成元件。桌面使用 `Main.unity`，VR 模擬使用獨立的 `VRSimulation.unity` 與 TerrainData 副本；共用道具資產及放置規則，以明確 Inspector 參照連接。最後新增 `SceneMenu.unity` 作為 App 啟動入口。
@@ -213,7 +215,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 | 公開儲存庫與初始推送 | 已建立，保留 M1–M4 與文件 PR 的開發歷程 |
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
 | 指引線 | S4 已實作專用金色指引與落點圓環；測試與待人工確認見 S4Validation |
-| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3 已實作（技術驗證見 S3Validation，待使用者精準度與舒適度確認）；S4 已實作，驗證見 S4Validation；S5 待實作與驗證 |
+| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3 已實作（技術驗證見 S3Validation，待使用者精準度與舒適度確認）；S4 已實作，驗證見 S4Validation；S5 已實作，技術驗證與人工待確認見 S5Validation |
 | 場景選單 | 兩版完成後於 I1 實作 |
 | XR | 選配，待確認設備與時間 |
 | 整合建置與完整驗收 | 待執行；原 M6 延後至 I2 |
@@ -256,3 +258,21 @@ S3 使用者後續回報 Play Mode 測試正常，並確認縮小 viewport 後�
 從 PR #14 合併後同步的 main 6b6649a 建立 codex/vr-simulation-s4。共用世界 Ray 查詢與放置核心，VR 採來源平面 18 UI 單位且離開項目的拖出門檻、單一擁有權與重新查詢放開；加入專用透明預覽、金色指引及真正地形落點圓環。保留既有操作直線、S1 參數、S2 動畫與 S3 3／24 滾輪設定。S4 測試與桌面／S1–S3 回歸結果、初輪失敗與限制見 [S4 驗證紀錄](S4Validation.md)。尚待使用者放置精準度與操作舒適度確認；只到 S4，不實作 S5 或場景選單。
 
 S4 使用者後續回報目前 Play Mode 測試正常，並授權提交 PR 與 Codex Review；此為整體試玩確認，逐項覆蓋限制見 S4Validation 的補記，不代表 Windows／XR 或所有精準度與舒適度案例驗收。
+
+### S5 執行狀態（2026-11-06–07）
+
+PR #15 合併後重新 fetch，確認 origin/main 為 fdd6325，再由同步 main 建立 codex/vr-simulation-s5。共用選取實例有效性、切換／清除及單次刪除規則；桌面保留原滑鼠事件順序與延後選取，VR 沿用唯一射線路由，以右球實際世界射線與逐筆按放事件處理選取。新增物件側邊 World Space 名稱／DELETE 選單，兩份 Canvas 與場景統一比較距離及遮擋。沒有選取材質修改。S5 驗證及人工待確認見 [S5Validation](S5Validation.md)。本次停在 S5，不實作 I1／I2，不推送或建立 PR。
+
+2026-11-07 S5 顯示調整：依使用者回饋，世界選單在近距離／視野邊緣改為調整位置與縮放，完整保留在 Camera 可視範圍；仍保留實際遮擋與後方／失效目標清理，詳見 S5Validation 補記。
+
+
+2026-11-07 S5 再調整：依使用者明確需求，改採物件中心偏上的固定世界位置與物件比例尺寸、始終面向觀看者，取代前述距離縮放與視野內夾限。偏移及尺寸可調，不再以 15 m 為隱藏門檻，保留場景遮擋與自然裁切。使用者已回報此前點選刪除正常，此確認不涵蓋本次新定位。依更新後 AGENT.md，本次 Unity 內驗證由使用者執行，狀態為待使用者驗證。仍限 S5，不包含 I1／I2。
+
+
+2026-11-07 S5 水平繞行更新：使用者要求選單隨觀看者繞至物件前方，取代上一版固定世界位置。以水平包圍盒外接圓加可調間距繞行，保持中心偏上的可調高度與物件比例尺寸。Offset Ratio 改用繞行座標，新增 Orbit Gap Ratio=0.1。Unity 內驗證待使用者執行，詳見 S5Validation 最新補記；仍不包含 I1／I2。
+
+
+2026-11-07 S5 右鍵觀看：保留完成的選取／選單，取消未完成點擊、暫停射線互動並要求左鍵重新按下；不再因觀看而清除目標。Unity 內驗證待使用者執行。
+
+
+2026-11-07 使用者回報目前測試正常，並要求提交 PR 與審查；確認對應右鍵觀看保留選單修正 8db0f54。未另列逐項案例、解析度或自動測試結果，不擴大為七項 Test Runner、原生連續縮放、Windows 或 XR 已通過。歷史待驗證文字保留其當時狀態，本補記為最新整體人工回報。
