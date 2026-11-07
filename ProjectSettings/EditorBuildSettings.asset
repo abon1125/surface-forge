@@ -14,6 +14,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/SurfaceForge/Scenes/VRSimulation.unity
     guid: d0ee29dfc40aa4d47b29caee7ebe9ecc
+  - enabled: 1
+    path: Assets/SurfaceForge/Scenes/Loading.unity
+    guid: 2dcd3a079873cc340a19b6e627dd4107
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

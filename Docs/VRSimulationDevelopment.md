@@ -230,10 +230,10 @@ S0–S5 逐項進行相關基本驗證；I2 再於整合 App 完整重驗，包�
 
 ## 12. 後續場景選單與整合交付
 
-- 兩版完成後新增 `Assets/SurfaceForge/Scenes/SceneMenu.unity`，提供「桌面版驗收」與「VR 模擬驗收」按鈕，以單場景替換載入 Main 或 VRSimulation，不採疊加載入。
+- `Assets/SurfaceForge/Scenes/SceneMenu.unity` 提供「桌面版驗收」與「VR 模擬驗收」。依 2026-11-07 I1 補充需求，以非同步 additive Loading 轉場：淡入覆蓋後先卸載來源，再載入目標；完成後淡出並卸載 Loading，不保留兩套操作場景。
 - 兩個操作場景加入可點擊的「返回場景選單」入口；VR 入口使用右控制器射線可操作的 UI，沿用 UI 輸入優先規則，不占用既有 Esc 取消及面板關閉行為。
 - 返回前取消拖曳、清除指引與選取、恢復游標；已放置物件隨場景卸載清除。再次進入為初始狀態，不保存或跨場景同步道具。
-- Build Profile 包含 SceneMenu、Main 與 VRSimulation，以 SceneMenu 為啟動場景，Windows x64 統一輸出至 `Builds/Windows/`；不以兩個獨立執行檔作為最終交付。
+- Build Profile 包含 SceneMenu、Main、VRSimulation 與 Loading，以 SceneMenu 為啟動場景，Windows x64 統一輸出至 `Builds/Windows/`；不以兩個獨立執行檔作為最終交付，實際建置於 I2 執行。
 - I2 驗證啟動選擇、兩方向返回與重新進入，反覆往返至少 10 次；確認只有一套有效攝影機、AudioListener 與 EventSystem，無殘留預覽、UI、重複輸入及意外放置。
 - 完整桌面驗收、VR 驗收、視窗縮放與失焦測試皆需在 Editor 外執行，記錄提交、平台、結果與限制。錄影呈現場景選單及兩版主要流程；模擬驗收不等於實機 XR 驗收。
 
@@ -275,3 +275,11 @@ S5 右鍵觀看更新（2026-11-07）：右鍵觀看保留已完成的選取與�
 SceneNavigation 等目前 UI click 派送返回後，在 LateUpdate 停用舊輸入、取消拖曳與預覽／指引、清選取與面板、恢復游標，再以 LoadSceneMode.Single 替換；卸載移除舊訂閱及道具，不保存或跨場景同步。再次進入角色回到場景初始配置、面板收合；Main、VRSimulation 仍可直接從 Editor 開啟，不依賴先進選單。全域及目前場景清單為 SceneMenu → Main → VRSimulation。
 
 I1 已實作，Unity 外檢查與新增但未執行的生命週期測試、具體手動步驟及字型限制見 [I1 驗證紀錄](I1Validation.md)。Unity 內測試（含 Test Runner／Play Mode）、兩方向進入／返回／再進入、三比例與執行中縮放皆待使用者執行。I2 的完整反覆往返、邊界整合與 Windows 執行檔、D1 錄影及實機 XR 未開始。
+
+## I1 Loading 補記（2026-11-07）
+
+使用者另行確認 Loading additive 方案，取代上一節原始 6191902 的 Single 載入描述，歷史紀錄保留。選單進入兩版與兩版返回均經 Loading：預設 0.25 秒淡入、進度條至少 1.5 秒、0.25 秒淡出，使用 unscaled time、可調參數。進度為實際載入與時間共同限制的平滑估計，真正目標準備好才到 100%；實際較慢時延長等待。
+
+Loading 不新增攝影機、AudioListener 或 EventSystem，不參與右球射線查詢。原 VR 返回入口及 UI 遮擋不變；請求在原 click 派送結束後清理及停用輸入，完全遮住才卸載舊場景，再載入新場景。新場景 Awake 先暫停操作，Loading 淡出並卸載後，左／右鍵、Tab、Esc 都放開且經過無按鍵事件的影格才恢復；不把轉場期間的點擊、右鍵觀看或 Tab 交給新場景。左手面板、射線、選取與放置初始狀態維持。
+
+沒有持久化場景／道具或新的競爭輸入模組。失敗時只嘗試一次返回 SceneMenu，仍失敗則顯示錯誤並維持輸入停用。新測試與人工案例皆待使用者在 Unity 驗證，詳見 [I1Validation.md](I1Validation.md) 最新補記；I2／D1／XR 不在本次範圍。

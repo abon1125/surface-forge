@@ -62,6 +62,8 @@ S5 右鍵觀看更新（2026-11-07）：右鍵觀看保留已完成的選取與�
 
 開啟 `Assets/SurfaceForge/Scenes/SceneMenu.unity` 後由使用者進入 Play Mode，點「桌面版驗收」或「VR 模擬驗收」。桌面左上可點「返回場景選單」；VR 按 Tab 展開左手面板，以既有右球射線點面板下方「返回場景選單」。拖曳中在返回 UI 放開只取消放置，須重新點擊才返回。Esc 保留原取消／清選取／收面板功能。
 
-採單場景替換，返回前清除互動並恢復游標；道具不保存、不跨場景同步，再進入從初始配置開始。標準場景順序為 SceneMenu、Main、VRSimulation。新增中文字於執行時使用 OS 字型（Windows Microsoft JhengHei）；字型名稱、導航參照及按鈕 RectTransform 可調。
+採非同步 additive 轉場：暫時載入 Loading，深色畫面淡入後卸載來源，再載入目標；進度完成、淡出後卸載 Loading。操作場景不並存，道具不保存、不跨場景同步，再進入從初始配置開始。預設淡入 0.25 秒、進度條至少 1.5 秒、淡出 0.25 秒；在 Loading UI 的 LoadingController Inspector 可調。百分比結合實際載入與最低顯示時間，為平滑估計值。轉場期間不能操作，左／右滑鼠鍵、Tab、Esc 放開且經過無按鍵事件的影格後恢復輸入。
+
+標準場景順序為 SceneMenu、Main、VRSimulation、Loading，SceneMenu 仍為啟動入口。Loading 沒有 Camera、AudioListener、EventSystem 或滑鼠模組，直接測試請開 SceneMenu 或操作場景。新增中文字於執行時使用 OS 字型（Windows Microsoft JhengHei）；字型名稱、導航參照及按鈕 RectTransform 可調。原始 I1 的 Single 載入紀錄保留於驗證文件，已由本次需求取代。
 
 本次 Unity 內測試與三比例／縮放均待使用者執行。具體步驟、生命週期測試、Unity 外檢查及限制見 [I1 驗證紀錄](Docs/I1Validation.md)。S5 歷史測試和使用者整體確認仍以原紀錄為準。I2 完整整合與 Windows 建置、D1 錄影交付及實機 XR 未執行；本次僅本機實作與提交。

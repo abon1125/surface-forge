@@ -64,17 +64,18 @@ namespace SurfaceForge.Editor
                 UnityEventTools.AddPersistentListener(vr.onClick, navigation.OpenSimulation);
                 Labels(navigation, title, main.GetComponentInChildren<Text>(), vr.GetComponentInChildren<Text>());
                 EditorSceneManager.SaveScene(scene, SceneNavigation.MenuPath);
+                if (!AssetDatabase.LoadAssetAtPath<SceneAsset>(SceneNavigation.LoadingPath)) return LoadingSceneAuthoring.Author();
                 return ConfigureSceneOrder();
             }
             finally { EditorSceneManager.RestoreSceneManagerSetup(setup); }
         }
-        [UnitySkill("sf_configure_scene_order", "Set global and active scene lists to SceneMenu, Main, VRSimulation. Does not build or enter Play Mode.",
+        [UnitySkill("sf_configure_scene_order", "Set global and active scene lists to SceneMenu, Main, VRSimulation, Loading. Does not build or enter Play Mode.",
             Category = SkillCategory.Scene, Operation = SkillOperation.Modify, MutatesAssets = true,
             TracksWorkflow = false, RiskLevel = "high", Outputs = new[] { "paths" })]
         public static object ConfigureSceneOrder()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("請先離開 Play Mode。");
-            var paths = new[] { SceneNavigation.MenuPath, SceneNavigation.DesktopPath, SceneNavigation.SimulationPath };
+            var paths = new[] { SceneNavigation.MenuPath, SceneNavigation.DesktopPath, SceneNavigation.SimulationPath, SceneNavigation.LoadingPath };
             if (paths.Any(p => !AssetDatabase.LoadAssetAtPath<SceneAsset>(p))) throw new InvalidOperationException("場景尚未建立完整。");
             EditorBuildSettings.globalScenes = paths.Select(p => new EditorBuildSettingsScene(p, true)).ToArray();
             EditorBuildSettings.scenes = EditorBuildSettings.globalScenes;

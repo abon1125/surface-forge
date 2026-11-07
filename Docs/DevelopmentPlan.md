@@ -176,7 +176,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 ### 場景選單與整合驗收（I1–I2）
 
 - [ ] App 啟動進入 SceneMenu，可分別選擇 Main 或 VRSimulation。
-- [ ] 使用單場景替換載入，不同時保留兩套操作場景；只有一套有效攝影機、AudioListener 與 EventSystem。
+- [ ] 使用非同步 additive Loading 轉場；覆蓋畫面後先卸載來源再載入目標，完成即卸載 Loading。不保留兩套操作場景；Loading 不含攝影機、AudioListener 或 EventSystem，轉場中輸入停用，完成後只有一套有效元件。
 - [ ] 返回選單前清除預覽、指引、選取及輸入狀態，恢復可見且未鎖定的游標；舊場景物件隨卸載清除。
 - [ ] 再次進入任一場景皆從初始狀態開始，不保留已放置道具；不提供跨場景同步或存檔。
 - [ ] 反覆往返至少 10 次，無重複輸入、殘留 UI、遺失參照或意外放置。
@@ -195,7 +195,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 
 ## 9. 建置、錄影與最終交付
 
-1. 在 I1–I2 階段將 SceneMenu、Main 與 VRSimulation 加入同一 Windows x64 Build Profile，以 SceneMenu 為第一個啟動場景，確認視窗可縮放。
+1. 在 I1–I2 階段將 SceneMenu、Main、VRSimulation 與 Loading 加入同一 Windows x64 Build Profile，以 SceneMenu 為第一個啟動場景，確認視窗可縮放；實際建置留待 I2。
 2. 建置至忽略版控的 `Builds/Windows/`；發布時壓縮執行檔與所有必要相鄰檔案，不能只交付 `.exe`。
 3. 在 Editor 外啟動建置，執行完整人工驗收；記錄 Unity 版本、平台、提交 SHA、測試結果與已知限制。
 4. 錄影呈現：啟動選單 → 桌面縮放、清單、放置取消與選取刪除 → 返回選單 → VR 模擬移動、左手面板、右手射線、放置指引及刪除 → 返回選單。實機 XR 僅在已驗證時另行展示。
@@ -282,3 +282,9 @@ PR #15 合併後重新 fetch，確認 origin/main 為 fdd6325，再由同步 mai
 重新 fetch 並確認 PR #17 已合併，main 與 origin/main 均為 e315510da4e6c29cc4d9828e9e8f06478f09dd31，從 main 新建 codex/scene-menu-i1。新增 SceneMenu 的兩個驗收入口、Main 左上返回，以及 VR 左手面板下方由既有右球射線操作的返回按鈕。單場景替換、切換前清理互動與游標、重新進入不保存道具；Esc 及既有功能維持。全域／當前場景清單皆以 SceneMenu 為首。
 
 本次只實作 I1 並做 Unity 外編譯與差異檢查；新增生命週期測試但未執行，Unity 內基本功能、三比例及執行中縮放待使用者驗證，詳見 [I1Validation.md](I1Validation.md)。不將既有 S5 的整體確認擴大為本版驗收。I2 至少十次往返、完整整合與 Windows 建置、D1 錄影及實機 XR 留待後續，本次不推送或建立 PR。六個既有未提交檔案保留並排除本次提交。
+
+### I1 Loading 補充（2026-11-07）
+
+使用者確認以轉場期間存在的獨立 Loading 場景替換上述原始 I1 Single 載入決策；上一節保留為 6191902 的歷史狀態。現改非同步 additive 載入 Loading、0.25 秒淡入遮住畫面、卸載來源、additive 載入目標並設為 active scene、進度條至少顯示 1.5 秒、0.25 秒淡出、卸載 Loading。Loading 僅有螢幕覆蓋 Canvas，無 Camera／AudioListener／EventSystem；操作場景不並存，切換前清理及重新進入初始狀態不變。左／右鍵、Tab、Esc 放開並經過無按鍵事件的影格後才恢復目標輸入；不用 DontDestroyOnLoad。
+
+場景清單為 SceneMenu → Main → VRSimulation → Loading。新增／更新的生命週期、進度、timeScale=0 與按鍵延續測試僅編譯未執行，Unity 內驗證仍由使用者操作；最新檢查、步驟與錯誤處理限制見 [I1Validation.md](I1Validation.md) 的 Loading 補記。仍限 I1，本機提交，不推送、不建立 PR，不執行 I2／D1／XR。
