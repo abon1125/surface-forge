@@ -284,36 +284,51 @@ namespace SurfaceForge.Tests
             Assert.That(Object.FindFirstObjectByType<SimulationSelectionController>().Selected,Is.Null);
             Assert.That(Object.FindFirstObjectByType<SimulationContextMenuView>().Target,Is.Null);
         }
-        [UnityTest] public IEnumerator AttachedMenuKeepsWorldPositionAndSizeAcrossViewChanges()
+        [UnityTest] public IEnumerator OrbitMenuStaysOnViewerSideWithStableHeightAndSize()
         {
-            var prop=Spawn(0);var camera=raycaster.ViewCamera;
-            foreach(var collider in prop.GetComponentsInChildren<Collider>())collider.isTrigger=true;
-            var rect=(RectTransform)Field<Canvas>(context,"canvas").transform;
-            var cameraPosition=camera.transform.position;var cameraRotation=camera.transform.rotation;
+            var camera=raycaster.ViewCamera;var rect=(RectTransform)Field<Canvas>(context,"canvas").transform;
+            var originalPosition=camera.transform.position;var originalRotation=camera.transform.rotation;
             float originalAspect=camera.aspect;
+            for(int kind=0;kind<4;kind++)
             foreach(float scale in new[]{.5f,1f,2f})
             {
-                prop.transform.localScale=Vector3.one*scale;Physics.SyncTransforms();selection.Select(prop);
-                var bounds=prop.GetComponentInChildren<Collider>().bounds;
-                var expected=bounds.center+Vector3.Scale(bounds.size,new Vector3(0,.6f,0));
-                float width=Mathf.Max(bounds.size.x,bounds.size.y,bounds.size.z)*.5f;
-                foreach(float ratio in new[]{16f/9,4f/3,1720f/720})
-                foreach(var offset in new[]{new Vector3(0,0,.15f),new Vector3(0,0,20),new Vector3(20,0,0),new Vector3(0,0,-3)})
+                var prop=Spawn(kind);prop.transform.localScale=Vector3.one*scale;
+                foreach(var collider in prop.GetComponentsInChildren<Collider>())collider.isTrigger=true;
+                Physics.SyncTransforms();var bounds=prop.GetComponentInChildren<Collider>().bounds;
+                float extent=Mathf.Max(bounds.size.x,bounds.size.y,bounds.size.z);
+                float radius=new Vector2(bounds.extents.x,bounds.extents.z).magnitude+extent*.1f;
+                foreach(float aspect in new[]{16f/9,4f/3,1720f/720})
+                foreach(float distance in new[]{.15f,3f,20f})
+                for(int angle=0;angle<360;angle+=45)
                 {
-                    camera.aspect=ratio;camera.transform.position=expected-offset;
-                    Call(context,"RefreshPosition");Canvas.ForceUpdateCanvases();
+                    var toward=Quaternion.Euler(0,angle,0)*Vector3.forward;
+                    camera.aspect=aspect;camera.transform.position=bounds.center+toward*distance+Vector3.up*2;
+                    selection.Select(prop);Call(context,"RefreshPosition");
+                    var expected=bounds.center+Vector3.up*(bounds.size.y*.6f)+toward*radius;
                     Assert.That(context.IsVisible,Is.True);
                     Assert.That(Vector3.Distance(rect.position,expected),Is.LessThan(.0001f));
-                    Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(width).Within(.0001f));
-                    Assert.That(Vector3.Dot(rect.forward,offset.normalized),Is.GreaterThan(.999f));
+                    Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(extent*.5f).Within(.0001f));
+                    Assert.That(Vector3.Dot(rect.forward,(rect.position-camera.transform.position).normalized),Is.GreaterThan(.999f));
                 }
+                // 正上方沿用最後有效方向；切換目標後不沿用另一物件的方向。
+                var previous=rect.position;camera.transform.position=bounds.center+Vector3.up*5;
+                Call(context,"RefreshPosition");Assert.That(Vector3.Distance(rect.position,previous),Is.LessThan(.0001f));
+                context.Hide();camera.transform.rotation=Quaternion.identity;context.Show(prop);
+                Assert.That(Vector3.Dot((rect.position-bounds.center).normalized,Vector3.back),Is.GreaterThan(0));
+                typeof(SimulationContextMenuView).GetField("offsetRatio",Private).SetValue(context,new Vector3(.2f,1,.3f));
+                typeof(SimulationContextMenuView).GetField("widthRatio",Private).SetValue(context,.75f);
+                typeof(SimulationContextMenuView).GetField("orbitGapRatio",Private).SetValue(context,.2f);
+                camera.transform.position=bounds.center+Vector3.forward*5;Call(context,"RefreshPosition");
+                var custom=bounds.center+Vector3.up*bounds.size.y+Vector3.right*(bounds.size.x*.2f)
+                    +Vector3.forward*(radius+extent*.1f+bounds.size.z*.3f);
+                Assert.That(Vector3.Distance(rect.position,custom),Is.LessThan(.0001f));
+                Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(extent*.75f).Within(.0001f));
+                typeof(SimulationContextMenuView).GetField("offsetRatio",Private).SetValue(context,new Vector3(0,.6f,0));
+                typeof(SimulationContextMenuView).GetField("widthRatio",Private).SetValue(context,.5f);
+                typeof(SimulationContextMenuView).GetField("orbitGapRatio",Private).SetValue(context,.1f);
+                selection.ClearSelection();Object.DestroyImmediate(prop.gameObject);
             }
-            typeof(SimulationContextMenuView).GetField("offsetRatio",Private).SetValue(context,new Vector3(.2f,1,0));
-            typeof(SimulationContextMenuView).GetField("widthRatio",Private).SetValue(context,.75f);
-            var finalBounds=prop.GetComponentInChildren<Collider>().bounds;Call(context,"RefreshPosition");
-            Assert.That(Vector3.Distance(rect.position,finalBounds.center+Vector3.Scale(finalBounds.size,new Vector3(.2f,1,0))),Is.LessThan(.0001f));
-            Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(Mathf.Max(finalBounds.size.x,finalBounds.size.y,finalBounds.size.z)*.75f).Within(.0001f));
-            camera.aspect=originalAspect;camera.transform.SetPositionAndRotation(cameraPosition,cameraRotation);
+            camera.aspect=originalAspect;camera.transform.SetPositionAndRotation(originalPosition,originalRotation);
             yield return Frames();
         }
     }

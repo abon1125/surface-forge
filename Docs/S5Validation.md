@@ -2,7 +2,7 @@
 
 日期：2026-11-06–07（Asia/Taipei）。Unity 6000.3.25f1／Windows Editor，沿用 URP、Input System、UGUI 與 DOTween 1.3.045，未新增 XR 或升級套件。
 
-> 最新狀態：本文末段「物件附著式選單」取代先前定位規則；本次待使用者驗證。歷史通過結果不代表新版本通過。
+> 最新狀態：本文末段「水平繞行選單」取代先前定位規則；本次待使用者驗證。歷史通過結果不代表新版本通過。
 
 > 2026-11-07 顯示調整：使用者要求近距離／視野邊緣不要自動隱藏。下列初次交付內容以 d3147cd 為歷史基準，其隱藏規則由文件末段的顯示調整取代；歷史測試與 SHA／job 保留。
 
@@ -119,3 +119,24 @@ Input System Mouse／Keyboard 為測試裝置；S5／S4 測試暫時停用其他
 上述項目目前全部為待使用者驗證，不將先前 6/6 當作本次結果。
 
 Unity 外檢查：先以 dotnet restore SurfaceForge.Tests.csproj --source Temp 離線產生 Temp 內的還原資料，再執行 dotnet build SurfaceForge.Tests.csproj --no-restore --verbosity quiet，成功，0 警告／0 錯誤；此為 Unity 產生專案的外部 C# 編譯，不代表 Unity Editor 匯入或六項互動測試通過。git diff --check 通過。未操作 Unity API、圖形介面或啟動 Play Mode。
+
+
+## 水平繞行選單（2026-11-07，待使用者驗證）
+
+本節取代前一節固定世界位置的規則，保留歷史編譯與測試事實，不視為本次通過。
+
+選單採水平繞行：以物件有效 Collider 世界包圍盒中心至攝影機的水平朝向定位，繞行半徑為包圍盒水平外接圓半徑，加上最大邊長乘 Orbit Gap Ratio（預設 0.1）。Offset Ratio 預設 (0,0.6,0)，X 為繞行座標水平側移、Y 為世界高度、Z 為朝向使用者的額外偏移，分別乘包圍盒寬／高／深。Width Ratio 預設 0.5，寬為最大邊長一半，維持 260:120 比例。三項可在 SimulationSelection 的 SimulationContextMenuView Inspector 調整。選單始終面向攝影機；觀看者繞行時位置隨之繞到朝向使用者的一側，高度與實際尺寸不隨觀看距離改變。攝影機正上／下方沿用最近水平朝向；首次無方向採攝影機水平後方，垂直觀看則使用 camera up 的水平分量作穩定備援。切換或清除目標會重設方向記憶。不依距離隱藏、縮放或夾限畫面；保留自然裁切、世界遮擋與 100 m 右球射線範圍。
+
+未修改場景或資產，原 Offset Ratio 的序列化數值保留，但 X／Z 改為繞行座標，不再為世界軸向。新增 Orbit Gap Ratio 使用程式預設值。未修改選取／刪除／射線路由或 I1／I2。
+
+### 使用者操作與預期結果
+
+1. 開啟 VRSimulation，等待編譯完成，確認 Console 無編譯錯誤。SimulationSelection 的 SimulationContextMenuView 應顯示新增 Orbit Gap Ratio=0.1。
+2. Play Mode 放置四種道具，逐一選取並以 WASD／右鍵觀看繞行。預期選單位置移到物件朝向使用者的一側、文字面向使用者；高度不隨水平繞行變動。只旋轉視角而不改變使用者位置，不應改變繞行位置。
+3. 靠近、遠離至超過 15 m；預期實際尺寸與繞行半徑不變、沒有距離隱藏。必要時移動至合適距離或避開其他遮擋。
+4. 調整 Offset Ratio 的 X／Y／Z 與 Orbit Gap Ratio，確認側移／高度／向外偏移及間距生效；Width Ratio 控制大小。正式調整需在非 Play Mode 修改並儲存場景。
+5. 由不同方向操作 DELETE，預期只刪除選中實例，選單關閉；切換、空白清除、Esc、新拖曳與放置後再次選取均正常。其他道具或地形遮擋仍會阻擋操作。
+6. 重試 16:9、4:3、寬螢幕與執行中縮放，預期射線對應正確、不因畫面比例重排世界位置。
+7. 選用 Test Runner > EditMode > SurfaceForge.Tests.SimulationSelectionTests：更新的 OrbitMenuStaysOnViewerSideWithStableHeightAndSize 涵蓋四種道具、三種尺寸、三比例、近遠與八方位，以及正上方方向記憶、初始備援與自訂參數；既有案例保留 DELETE 射線／遮擋與生命週期檢查。全部待使用者執行，不宣稱已通過。
+
+本次 Unity 外檢查：dotnet build SurfaceForge.Tests.csproj --no-restore --verbosity quiet 成功，0 警告／0 錯誤；git diff --check 通過。未操作 Unity API／介面、未執行 Editor 測試或 Play Mode，因此互動與畫面仍待使用者驗證。
