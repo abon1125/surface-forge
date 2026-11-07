@@ -55,3 +55,28 @@
 必要自動回歸可由使用者執行 Test Runner → EditMode → `SurfaceForge.Tests.SimulationSelectionTests`（七項，含繞行與右鍵觀看）；測試會進出 Play Mode，先儲存工作。若要確認轉場沿用 `SceneNavigationTests`、`LoadingProgressTests`。本次代理未執行任何 Unity 內測試，不以編譯／匯入代替互動驗證。
 
 本表為本次變更的基本回歸，不取代 I2 的完整整合、反覆往返、Windows 執行檔與原生視窗驗收。字型後備、極小畫面及近距離可讀性仍需人工確認。
+
+## 後續 QA：說明文字與 Main 縮放（2026-11-07）
+
+基準 d9c39977595f7187ee223bb185cfff550d7afcb1，沿用同一 QA 分支。開始時只有 SimulationPreviewValid.mat 的既有未提交差異，繼續保留並排除。
+
+| 項目 | 重現／原狀 | 預期與修正 | 影響範圍 |
+| --- | --- | --- | --- |
+| VR 說明 | 頂端列出滾輪，但未明確描述刪除流程 | 移除滾輪文字，新增點選物件後點 DELETE 刪除 | 僅 VR 說明 Text 與對應作者；VR 滾輪功能維持 |
+| Main 縮放 | 在場景上滾輪，視角沒有縮放；攝影機每幀重算地形完整取景 | 原自動構圖乘上縮放倍率，上滾拉近、下滾拉遠 | TerrainOverviewCamera 與 Main 的 placement／navigation 明確參照；不改 VR 攝影機 |
+
+設定位置：Main Camera → TerrainOverviewCamera，Zoom Per Step=1.15、Minimum Zoom=0.35、Maximum Zoom=1.5、Wheel Units Per Step=120。倍率越小視野越近，1 為原始完整地形取景。不同滾輪裝置的 units 需依實際手感調整。縮放固定以既有畫面中心為中心，不新增平移或滑鼠落點對焦。
+
+輸入保護：只在有效 Game View／App 焦點且游標位於攝影機 viewport 內接受輸入，透過既有 PlacementController.IsOverUI 即時查 UI，UI／拖曳／左鍵持有／失焦／暫停／轉場及等待放鍵時均阻擋。中斷後須先經過零滾輪影格；重啟元件／重新載入場景重設倍率，視窗比例與側欄自動構圖仍保留。本次加入 TerrainOverviewCameraTests 兩項有關中斷後不沿用輸入、倍率上下限及重啟重設的回歸案例；它們只檢查狀態／倍率，不代替真實 UI、焦點及裝置輸入測試，未由代理執行。
+
+使用者驗證（全部待執行）：
+
+1. VR 進入後，預期三行說明不再列出滾輪，且清楚顯示「點選物件後，點 DELETE 刪除」；四種道具選取／刪除與原清單滾輪功能仍可用。
+2. Main 游標放場景空白處，先停一下再上／下滾；預期平順拉近／拉遠且有上下限。持續滾動至限制後反向可立即縮回，UI 尺寸不隨場景變化。
+3. 在清單／側欄／刪除選單／返回按鈕上滾動；預期視角不動，清單捲動仍有效。游標回到場景後先讓滾輪歸零，再滾動才縮放。
+4. 拖出預覽期間、按住左鍵、切到 Inspector／其他視窗、轉場期間滾動；預期不縮放、不放置或選取額外道具。回焦後停止滾動再重新滾動才接受。
+5. 縮放後測合法放置、UI／無命中取消、重複拖曳、選取／刪除與選單跟隨；預期以新攝影機射線正常操作。返回再進 Main 應恢復初始取景，VR 不受影響。
+6. 16:9、4:3、寬螢幕及 Game View 連續縮放各測一次；預期側欄保留，取景依當前倍率重新適應。放大後部分地形離開畫面屬預期，縮小找回。
+7. 使用者可執行 Test Runner → EditMode → SurfaceForge.Tests.TerrainOverviewCameraTests，及既有 PlacementTests／SelectionTests 回歸；先儲存場景。本次均未執行，不取代 I2。
+
+本輪已檢查：Editor API 回傳完整新說明文字、Overview Camera 的 placement／navigation 已接線；場景區塊比對確認 Main 僅攝影機設定區塊變動、VR 僅說明 Text 區塊變動，無新增／刪除既有區塊，兩份 Main 新參照可解析。兩個 Unity 外專案以 `dotnet build <專案> --no-restore --verbosity quiet -m:1 -p:UseSharedCompilation=false` 編譯成功，各 0 警告／0 錯誤；最終測試檔另編譯成功。Markdown 本機檔案連結與差異檢查通過；Unity 序列化空白依既有方式保留。場景作者需先離開 Play Mode 並儲存未儲存場景，這是編輯保護，不是 Unity 測試結果。既有材質差異仍未提交。

@@ -210,6 +210,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SurfaceForge.TerrainOverviewCamera
   sidebar: {fileID: 201802149}
   terrain: {fileID: 1959418546}
+  placement: {fileID: 1554793331}
+  navigation: {fileID: 745614748}
+  zoomPerStep: 1.15
+  minimumZoom: 0.35
+  maximumZoom: 1.5
+  wheelUnitsPerStep: 120
 --- !u!114 &2725457
 MonoBehaviour:
   m_ObjectHideFlags: 0

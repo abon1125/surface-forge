@@ -294,3 +294,7 @@ Loading 不新增攝影機、AudioListener 或 EventSystem，不參與右球射�
 VRSimulation 新增 `Simulation Controls UI`，Screen Space Overlay 固定頂端，以 1920×1080、match=0.5 隨畫面縮放；三行文字說明 WASD、右鍵、Tab、射線點選／拖出放置、滾輪、Esc 與返回入口。Canvas 無 GraphicRaycaster，CanvasGroup 不互動／不阻擋，Image／Text 不接收射線，不加入世界射線查詢。文字沿用 SceneNavigation 的 OS 字型與生命週期，場景卸載即清除。
 
 SimulationContextMenuView 的 Offset Ratio 預設與場景值皆改為 (0,0.3,0)：中心在物件包圍盒中心上方 0.3 倍高度，位於朝向觀看者的前側；水平繞行半徑、Width Ratio=0.5、Orbit Gap Ratio=0.1、自然裁切及遮擋維持。前面 S5 的 0.6 為歷史值。本次無輸入路由／狀態切換修改，既有繞行測試更新高度預期，未執行。具體驗證與限制見 [QA 紀錄](QABeforeI2.md)。
+
+### QA 說明文字更新（2026-11-07）
+
+依後續回饋，頂端說明移除滾輪文字，改為「左鍵：按住項目拖出，放開放置｜點選物件後，點 DELETE 刪除」。VR 清單滾輪功能本身保留；本次只改說明，不改輸入或選單定位。前節列出滾輪的文字為上一版歷史。畫面仍待使用者驗證。
