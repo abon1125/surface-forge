@@ -62,8 +62,11 @@ namespace SurfaceForge.UI
             if (mouse == null) { Interrupt(); return; }
             Vector2 position = mouse.position.ReadValue();
             bool valid = worldRaycaster && worldRaycaster.isActiveAndEnabled && player && player.isActiveAndEnabled &&
-                focused && !paused && Application.isFocused && !player.IsLooking && (OwnsDrag || !mouse.rightButton.isPressed) && InGameView(position);
+                focused && !paused && Application.isFocused;
             if (!valid) { Interrupt(); return; }
+            // 觀看只取消未完成手勢，保留選取與隨物件繞行的選單。
+            if (!OwnsDrag && (player.IsLooking || mouse.rightButton.isPressed)) { SuspendForLook(); return; }
+            if (!InGameView(position)) { Interrupt(); return; }
             CurrentRay = worldRaycaster.Aim(position);
             CurrentHit = worldRaycaster.Query(CurrentRay);
             Draw();
@@ -247,7 +250,8 @@ namespace SurfaceForge.UI
             foreach (var sample in batch)
             {
                 if (requireRelease) return;
-                if (!InGameView(sample.Position) || (sample.Right && !OwnsDrag)) { Interrupt(); return; }
+                if (sample.Right && !OwnsDrag) { SuspendForLook(); return; }
+                if (!InGameView(sample.Position)) { Interrupt(); return; }
                 CurrentRay = worldRaycaster.Aim(sample.Position);
                 CurrentHit = worldRaycaster.Query(CurrentRay);
                 if (OwnsDrag)
@@ -282,6 +286,13 @@ namespace SurfaceForge.UI
                     if (accept && selection && selection.isActiveAndEnabled) selection.Select(target);
                 }
             }
+        }
+        private void SuspendForLook()
+        {
+            MenuCancelled(false);
+            CurrentHit = default; CurrentRay = default;
+            if (rayLine) rayLine.enabled = false;
+            if (hitMarker) hitMarker.gameObject.SetActive(false);
         }
         private void Interrupt()
         {

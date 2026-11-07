@@ -178,7 +178,7 @@ namespace SurfaceForge.Tests
             Assert.That(selection.Selected,Is.SameAs(prop));yield return MouseAt(p);
             yield return Open();selection.ClearSelection();var ui=ScreenAt(items[0].transform);
             State(ui,true);State(p,true);State(p,false);yield return Frames();Assert.That(selection.Selected,Is.Null,"UI 起始不得轉成場景點擊");
-            for(int mode=0;mode<9;mode++)
+            for(int mode=0;mode<8;mode++)
             {
                 yield return Click(p);Assert.That(selection.Selected,Is.SameAs(prop));yield return MouseAt(p,true);
                 if(mode==0){Call(module,"OnApplicationFocus",false);Call(module,"OnApplicationFocus",true);}
@@ -189,12 +189,30 @@ namespace SurfaceForge.Tests
                 if(mode==5){player.enabled=false;player.enabled=true;}
                 if(mode==6){raycaster.enabled=false;raycaster.enabled=true;}
                 if(mode==7){yield return MouseAt(new Vector2(-5,-5),true);}
-                if(mode==8){yield return MouseAt(p,true,true);}
                 yield return MouseAt(p,true);Assert.That(selection.Selected,Is.Null,"中斷 "+mode);
                 yield return MouseAt(p);Assert.That(selection.Selected,Is.Null,"中斷後放開 "+mode);
             }
             yield return Click(p);Object.Destroy(prop.gameObject);yield return Frames();
             Assert.That(selection.Selected,Is.Null);Assert.That(context.Target,Is.Null);Assert.That(context.IsVisible,Is.False);
+        }
+        [UnityTest] public IEnumerator RightLookPreservesSelectionAndCancelsPendingDelete()
+        {
+            var prop=Spawn(0);yield return Click(HitPoint(prop));
+            var button=Field<Button>(context,"deleteButton");var point=ScreenAt(button.transform);
+            yield return MouseAt(point,true);Assert.That(module.HasPress,Is.True);
+            yield return MouseAt(point,true,true);
+            Assert.That(selection.Selected,Is.SameAs(prop));Assert.That(context.IsVisible,Is.True);
+            Assert.That(module.HasPress,Is.False);
+            yield return MouseAt(point,true);yield return MouseAt(point);
+            Assert.That(prop.gameObject.activeSelf,Is.True,"觀看前的按下不能在觀看後放開刪除");
+            Assert.That(selection.Selected,Is.SameAs(prop));
+            // 同一批次短按右鍵，也必須保留選取並取消這一批後續左鍵。
+            InputSystem.QueueStateEvent(mouse,new MouseState {position=point}.WithButton(MouseButton.Right));
+            InputSystem.QueueStateEvent(mouse,new MouseState {position=point});
+            State(point,true);State(point,false);yield return Frames();
+            Assert.That(selection.Selected,Is.SameAs(prop));Assert.That(prop.gameObject.activeSelf,Is.True);
+            yield return MouseAt(point);yield return Click(ScreenAt(button.transform));
+            Assert.That(selection.Selected,Is.Null);yield return Frames();Assert.That(prop==null,Is.True);
         }
         [UnityTest] public IEnumerator WorldRayForegroundAndMultipleCanvasOcclusion()
         {

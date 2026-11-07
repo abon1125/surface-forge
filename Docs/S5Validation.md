@@ -140,3 +140,14 @@ Unity 外檢查：先以 dotnet restore SurfaceForge.Tests.csproj --source Temp 
 7. 選用 Test Runner > EditMode > SurfaceForge.Tests.SimulationSelectionTests：更新的 OrbitMenuStaysOnViewerSideWithStableHeightAndSize 涵蓋四種道具、三種尺寸、三比例、近遠與八方位，以及正上方方向記憶、初始備援與自訂參數；既有案例保留 DELETE 射線／遮擋與生命週期檢查。全部待使用者執行，不宣稱已通過。
 
 本次 Unity 外檢查：dotnet build SurfaceForge.Tests.csproj --no-restore --verbosity quiet 成功，0 警告／0 錯誤；git diff --check 通過。未操作 Unity API／介面、未執行 Editor 測試或 Play Mode，因此互動與畫面仍待使用者驗證。
+
+
+## 右鍵觀看保留選單（2026-11-07，待使用者驗證）
+
+本節取代歷史記錄中「右鍵觀看清除選取」規則。觀看保留已完成選取與選單，仍更新水平繞行；取消未完成場景／UI 按下並暫停射線互動，結束後先放開左鍵才接受新點擊。同批短按右鍵也適用。失焦、暫停、停用、Esc、新拖曳及目標失效仍依原規則清理。
+
+新增 RightLookPreservesSelectionAndCancelsPendingDelete，原中斷案例移除右鍵清除的舊預期。Unity 測試共七項，未代為執行。
+
+使用者驗證：開啟 VRSimulation 並進入 Play Mode，放置並選取物件；按住右鍵轉動視角、走動後放開，預期選單仍附著同一物件並隨位置繞行。另測 DELETE 按住左鍵 → 按右鍵觀看 → 放開右鍵 → 放開左鍵，預期物件未刪除，再次正常點 DELETE 才刪除。快速右鍵按放也不應關閉選單。確認 Esc、空白清除、失焦與新拖曳仍正常，並重試三種比例與縮放。可自行執行 Test Runner 的 SurfaceForge.Tests.SimulationSelectionTests 七項。
+
+本次 Unity 外檢查：dotnet build SurfaceForge.Tests.csproj --no-restore --verbosity quiet 成功，0 警告／0 錯誤；git diff --check 通過。未操作 Unity API／介面或執行 Unity 內驗證。
