@@ -274,7 +274,7 @@ S5 右鍵觀看更新（2026-11-07）：右鍵觀看保留已完成的選取與�
 
 SceneNavigation 等目前 UI click 派送返回後，在 LateUpdate 停用舊輸入、取消拖曳與預覽／指引、清選取與面板、恢復游標，再以 LoadSceneMode.Single 替換；卸載移除舊訂閱及道具，不保存或跨場景同步。再次進入角色回到場景初始配置、面板收合；Main、VRSimulation 仍可直接從 Editor 開啟，不依賴先進選單。全域及目前場景清單為 SceneMenu → Main → VRSimulation。
 
-I1 已實作，Unity 外檢查與新增但未執行的生命週期測試、具體手動步驟及字型限制見 [I1 驗證紀錄](I1Validation.md)。Unity 內測試（含 Test Runner／Play Mode）、兩方向進入／返回／再進入、三比例與執行中縮放皆待使用者執行。I2 的完整反覆往返、邊界整合與 Windows 執行檔、D1 錄影及實機 XR 未開始。
+I1 已實作，Unity 外檢查與新增但未執行的生命週期測試、具體手動步驟及字型限制見 [I1 驗證紀錄](I1Validation.md)。Unity 內自動測試當時未執行；依 2026-11-07 釐清的 [專案規則](../AGENT.md#驗證與完成定義)，代理可透過 Unity Skills Editor API 或命令列執行自動測試及其所需的進出 Play Mode，禁止使用 Codex Computer Use 操作 Unity 圖形介面。兩方向進入／返回／再進入、三比例與執行中縮放的人工驗收仍為「待使用者驗證」，自動測試通過不能代替人工驗收。I2 的完整反覆往返、邊界整合與 Windows 執行檔、D1 錄影及實機 XR 未開始。
 
 ## I1 Loading 補記（2026-11-07）
 
@@ -282,7 +282,7 @@ I1 已實作，Unity 外檢查與新增但未執行的生命週期測試、具�
 
 Loading 不新增攝影機、AudioListener 或 EventSystem，不參與右球射線查詢。原 VR 返回入口及 UI 遮擋不變；請求在原 click 派送結束後清理及停用輸入，完全遮住才卸載舊場景，再載入新場景。新場景 Awake 先暫停操作，Loading 淡出並卸載後，左／右鍵、Tab、Esc 都放開且經過無按鍵事件的影格才恢復；不把轉場期間的點擊、右鍵觀看或 Tab 交給新場景。左手面板、射線、選取與放置初始狀態維持。
 
-沒有持久化場景／道具或新的競爭輸入模組。失敗時只嘗試一次返回 SceneMenu，仍失敗則顯示錯誤並維持輸入停用。新測試與人工案例皆待使用者在 Unity 驗證，詳見 [I1Validation.md](I1Validation.md) 最新補記；I2／D1／XR 不在本次範圍。
+沒有持久化場景／道具或新的競爭輸入模組。失敗時只嘗試一次返回 SceneMenu，仍失敗則顯示錯誤並維持輸入停用。新測試當時未執行，後續可由代理依上述規則執行自動測試；人工案例仍為「待使用者驗證」，詳見 [I1Validation.md](I1Validation.md) 最新補記；I2／D1／XR 不在本次範圍。
 
 
 2026-11-07 使用者回報目前測試正常，並授權提交 PR 與 Codex Review；此整體確認對應 I1 additive Loading 提交 3a373fc。未另列逐項案例、解析度、Test Runner 或故障注入結果，不推定全部自動測試、連續縮放、I2 完整往返、Windows 或 XR 已通過。上述待驗證敘述保留其當時狀態，本補記更新最新人工回報；本次不重跑 Unity 測試，且未授權合併。
