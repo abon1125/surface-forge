@@ -1,5 +1,7 @@
 # I2 前 QA 紀錄
 
+> 2026-11-07 結案補記：本 QA 已隨 PR #21 合併，使用者已確認修正後測試正常，並於後續確認 I2 驗收、Windows 建置及 D1 發布交付完成。詳見 [完成與發布交付紀錄](DeliveryCompletion.md)；以下保留 QA 過程、失敗與未執行項目的歷史事實。
+
 日期：2026-11-07（Asia/Taipei）。基準 `9a460945549674755de6fc478e6f1f7d1f138d59`，分支 `codex/qa-before-i2`。PR #19 已確認合併，fetch 後 main／origin/main 一致，且已包含 PR #20。開始時工作區與暫存區乾淨。本次僅本機修正與提交，不推送、不建立 PR 或請求審查；不開始 I2／Windows、D1 或實機 XR。
 
 ## QA 項目與處理

@@ -19,12 +19,9 @@ Unity 地形道具工作區，提供桌面操作與 VR 鍵鼠模擬。可拖出�
 
 兩版刪除選單以 DOTween 淡入／淡出，關閉時立即停止互動。VR 畫面頂端提供固定操作說明。放置底部錨點對齊地形命中位置與法線；允許道具重疊。失焦或中斷會清理未完成操作。VR UI 遵守場景遮擋，需移動至可見位置操作。
 
-## 目前狀態
+## 專案文件
 
-桌面 M1–M4、VR S0–S5、I1 場景選單及 additive Loading 已實作，已有使用者整體 Play Mode 正常回報；該回報不代表所有自動案例、比例與連續縮放通過。2026-11-07 使用者對 6d4e2a1 修正後回報上述測試正常，並將 Main 的 Wheel Units Per Step 調為 3；此為整體人工回報，未另列比例／次數或完整逐項覆蓋。
-
-I2 完整整合驗收與 Windows 建置、D1 錄影交付、實機 XR 尚未執行。專案設定整理後的重新開啟、畫面與儲存穩定性仍待確認。鍵鼠模擬不等於 XR 硬體驗證。
-
+- [完成與發布交付紀錄](Docs/DeliveryCompletion.md)
 - [開發計畫與交付範圍](Docs/DevelopmentPlan.md)
 - [VR 規格與可調參數](Docs/VRSimulationDevelopment.md)
 - [本次 QA 與驗證步驟](Docs/QABeforeI2.md)
