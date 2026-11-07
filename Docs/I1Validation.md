@@ -103,3 +103,6 @@ Test Runner → EditMode 分別執行 `SurfaceForge.Tests.SceneNavigationTests` 
 本次仍只完成 I1 補充。I2 至少十次反覆往返、完整邊界整合與 Windows 執行檔、D1 錄影及實機 XR 留待後續。
 
 最後靜態檢查確認 Loading 沒有 Camera／AudioListener／EventSystem／InputSystemUIInputModule／GraphicRaycaster，全部內部 fileID 參照可解析，必要 UI 參照及 0.25／1.5／0.25 預設值正確；四場景順序正確，原有三場景沒有差異。程式／文件的標準空白檢查通過；新增場景保留 Unity 空欄位尾端空白，完整檢查沿用排除 blank-at-eol 的方式。Editor 另自動同步 SimulationPreviewValid 材質的 _Color，本次還原這個開始時不存在的無關變更。六個既有檔案以 SHA-256 比對原值並排除提交。最後階段額度為 5 小時剩餘 63%、每週剩餘 19%，未觸及暫停門檻。
+
+
+2026-11-07 使用者回報目前測試正常，並授權提交 PR 與 Codex Review；此整體確認對應 I1 additive Loading 提交 3a373fc。未另列逐項案例、解析度、Test Runner 或故障注入結果，不推定全部自動測試、連續縮放、I2 完整往返、Windows 或 XR 已通過。上述待驗證敘述保留其當時狀態，本補記更新最新人工回報；本次不重跑 Unity 測試，且未授權合併。

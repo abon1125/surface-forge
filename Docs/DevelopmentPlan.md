@@ -288,3 +288,6 @@ PR #15 合併後重新 fetch，確認 origin/main 為 fdd6325，再由同步 mai
 使用者確認以轉場期間存在的獨立 Loading 場景替換上述原始 I1 Single 載入決策；上一節保留為 6191902 的歷史狀態。現改非同步 additive 載入 Loading、0.25 秒淡入遮住畫面、卸載來源、additive 載入目標並設為 active scene、進度條至少顯示 1.5 秒、0.25 秒淡出、卸載 Loading。Loading 僅有螢幕覆蓋 Canvas，無 Camera／AudioListener／EventSystem；操作場景不並存，切換前清理及重新進入初始狀態不變。左／右鍵、Tab、Esc 放開並經過無按鍵事件的影格後才恢復目標輸入；不用 DontDestroyOnLoad。
 
 場景清單為 SceneMenu → Main → VRSimulation → Loading。新增／更新的生命週期、進度、timeScale=0 與按鍵延續測試僅編譯未執行，Unity 內驗證仍由使用者操作；最新檢查、步驟與錯誤處理限制見 [I1Validation.md](I1Validation.md) 的 Loading 補記。仍限 I1，本機提交，不推送、不建立 PR，不執行 I2／D1／XR。
+
+
+2026-11-07 使用者回報目前測試正常，並授權提交 PR 與 Codex Review；此整體確認對應 I1 additive Loading 提交 3a373fc。未另列逐項案例、解析度、Test Runner 或故障注入結果，不推定全部自動測試、連續縮放、I2 完整往返、Windows 或 XR 已通過。上述待驗證敘述保留其當時狀態，本補記更新最新人工回報；本次不重跑 Unity 測試，且未授權合併。

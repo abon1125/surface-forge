@@ -67,3 +67,6 @@ S5 右鍵觀看更新（2026-11-07）：右鍵觀看保留已完成的選取與�
 標準場景順序為 SceneMenu、Main、VRSimulation、Loading，SceneMenu 仍為啟動入口。Loading 沒有 Camera、AudioListener、EventSystem 或滑鼠模組，直接測試請開 SceneMenu 或操作場景。新增中文字於執行時使用 OS 字型（Windows Microsoft JhengHei）；字型名稱、導航參照及按鈕 RectTransform 可調。原始 I1 的 Single 載入紀錄保留於驗證文件，已由本次需求取代。
 
 本次 Unity 內測試與三比例／縮放均待使用者執行。具體步驟、生命週期測試、Unity 外檢查及限制見 [I1 驗證紀錄](Docs/I1Validation.md)。S5 歷史測試和使用者整體確認仍以原紀錄為準。I2 完整整合與 Windows 建置、D1 錄影交付及實機 XR 未執行；本次僅本機實作與提交。
+
+
+2026-11-07 使用者回報目前測試正常，並授權提交 PR 與 Codex Review；此整體確認對應 I1 additive Loading 提交 3a373fc。未另列逐項案例、解析度、Test Runner 或故障注入結果，不推定全部自動測試、連續縮放、I2 完整往返、Windows 或 XR 已通過。上述待驗證敘述保留其當時狀態，本補記更新最新人工回報；本次不重跑 Unity 測試，且未授權合併。
