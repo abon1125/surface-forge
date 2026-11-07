@@ -15,7 +15,11 @@
 - 允許代理透過 Unity Skills Editor API 或命令列讀取及修改場景、資產、程式與設定，並執行編譯及 Editor／EditMode／PlayMode 自動測試，包括自動測試所需的進出 Play Mode。場景與資產修改仍優先使用 Unity Skills Editor API；使用前必須讀取專案提供的 Unity Skills 協定，確認正確專案路徑與實例，不手改 Unity YAML。
 - 先確認現有 Git 歷史與遠端，不重建儲存庫、不重寫既有歷史。
 
-## 本次 QA 工作限制（2026-11-07）
+## 專案結案狀態（2026-11-07）
+
+使用者已確認 I2 驗收、Windows 建置及 D1 發布交付自行完成，專案基本完成；見 [完成與發布交付紀錄](Docs/DeliveryCompletion.md)。目前不再將 I2／Windows／D1 列為待開始工作，也不自行重新建置或發布。實機 XR 仍為選配且未驗證。以下 QA 範圍與授權為當時階段紀錄，不自動擴大為新工作的推送、PR 或對外發布授權。
+
+## I2 前 QA 工作限制（2026-11-07，歷史紀錄）
 
 本次 `codex/qa-before-i2` 依使用者 2026-11-07 最新釐清：禁止的是透過 Codex Computer Use 接管電腦、用滑鼠操作 Unity 圖形介面；Unity Skills Editor API 的場景／資產／程式操作、進出 Play Mode、重現問題及 Editor／EditMode／PlayMode 自動測試均允許，不需使用者代跑。此前本次 QA 將所有 Unity 內驗證交由使用者的限制已解除，舊紀錄保留當時未執行事實，不改列通過。人工畫面／手感驗收仍由使用者確認。使用者已於本輪測試正常後授權提交 PR 與 Codex Review，可提交、推送及建立／更新 PR、請求並追蹤審查；未授權合併。不提前開始 I2／Windows 建置、D1 或實機 XR。QA 項目與實際檢查見 [QABeforeI2.md](Docs/QABeforeI2.md)。
 
