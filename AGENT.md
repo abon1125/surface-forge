@@ -17,7 +17,7 @@
 
 ## 本次 QA 工作限制（2026-11-07）
 
-本次 `codex/qa-before-i2` 依使用者明確指示：Unity 內驗證（含 Editor／EditMode／PlayMode 自動測試）均由使用者執行，代理只進行 Unity 外編譯、引用與差異檢查；Editor API 僅用於必要的場景／資產編輯與讀回，不代跑測試。此為本次工作限制，優先於下方一般自動測試許可。只授權本機修正與提交，不推送、建立 PR、請求審查或合併；不提前開始 I2／Windows 建置、D1 或實機 XR。QA 項目與實際檢查見 [QABeforeI2.md](Docs/QABeforeI2.md)。
+本次 `codex/qa-before-i2` 依使用者 2026-11-07 最新釐清：禁止的是透過 Codex Computer Use 接管電腦、用滑鼠操作 Unity 圖形介面；Unity Skills Editor API 的場景／資產／程式操作、進出 Play Mode、重現問題及 Editor／EditMode／PlayMode 自動測試均允許，不需使用者代跑。此前本次 QA 將所有 Unity 內驗證交由使用者的限制已解除，舊紀錄保留當時未執行事實，不改列通過。人工畫面／手感驗收仍由使用者確認。只授權本機修正與提交，不推送、建立 PR、請求審查或合併；不提前開始 I2／Windows 建置、D1 或實機 XR。QA 項目與實際檢查見 [QABeforeI2.md](Docs/QABeforeI2.md)。
 
 ## 額度檢查與暫停續作
 

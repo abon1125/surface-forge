@@ -1,6 +1,6 @@
 # SurfaceForge 開發規格與交付計畫
 
-> 本文件同時保存規格、目前摘要與歷史紀錄；實際結果以各階段驗證紀錄為準。2026-11-07 QA 現況：桌面 M1–M4、VR S0–S5 與 I1 additive Loading 已實作，PR #18／#19 已合併；本次只處理 QA，不開始 I2／Windows／D1／XR，Unity 內測試由使用者執行。詳見 [QA 紀錄](QABeforeI2.md)。
+> 本文件同時保存規格、目前摘要與歷史紀錄；實際結果以各階段驗證紀錄為準。2026-11-07 QA 現況：桌面 M1–M4、VR S0–S5 與 I1 additive Loading 已實作，PR #18／#19 已合併；本次只處理 QA，不開始 I2／Windows／D1／XR；依使用者最新釐清，允許透過 Unity Skills 進出 Play Mode、重現與執行自動測試，仍禁止 Computer Use 操作 Unity。詳見 [QA 紀錄](QABeforeI2.md)。
 
 ## 1. 目標與範圍
 
@@ -219,7 +219,7 @@ Main 的 TerrainOverviewCamera 保留地形與側欄自動取景，再乘以使�
 
 | 項目 | 狀態 |
 | --- | --- |
-| 開發規格與代理規範 | PR #20 已合併；本次 QA 另依使用者限制，由使用者執行所有 Unity 內測試 |
+| 開發規格與代理規範 | PR #20 已合併；本次 QA 最新授權允許 Unity Skills 操作與自動測試，禁止 Computer Use 操作 Unity |
 | 公開儲存庫與初始推送 | 已建立，保留 M1–M4 與文件 PR 的開發歷程 |
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
 | 指引線 | S4 已實作專用金色指引與落點圓環；測試與待人工確認見 S4Validation |
