@@ -303,6 +303,24 @@ namespace SurfaceForge.Tests
             Assert.That(Object.FindFirstObjectByType<SimulationSelectionController>().Selected,Is.Null);
             Assert.That(Object.FindFirstObjectByType<SimulationContextMenuView>().Target,Is.Null);
         }
+        [UnityTest] public IEnumerator MenuRepairsMissingFadeBindingsBeforeDisplaying()
+        {
+            var prop = Spawn(0);
+            var canvas = Field<Canvas>(context,"canvas");
+            var group = canvas.GetComponent<CanvasGroup>();
+            if (group) Object.DestroyImmediate(group);
+            var fade = JsonUtility.FromJson<ContextMenuFade>(JsonUtility.ToJson(new ContextMenuFade()));
+            typeof(SimulationContextMenuView).GetField("fade",Private).SetValue(context,fade);
+            selection.Select(prop);
+            Assert.That(context.Target, Is.SameAs(prop));
+            Assert.That(context.IsVisible, Is.True);
+            Assert.That(canvas.GetComponent<CanvasGroup>(), Is.Not.Null);
+            yield return new WaitForSecondsRealtime(.25f);
+            Assert.That(canvas.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1).Within(.001f));
+            selection.ClearSelection();
+            Assert.That(canvas.GetComponent<CanvasGroup>().blocksRaycasts, Is.False);
+        }
+
         [UnityTest] public IEnumerator TiltedPropMenuOrbitsItsLocalYAxis()
         {
             var prop = Spawn(0);

@@ -104,3 +104,27 @@
 6. 使用者可在 Test Runner → EditMode 執行 ContextMenuFadeTests、SimulationSelectionTests（八項）、SelectionTests；先儲存場景。此為基本回歸，非 I2 完整整合、Windows 或 XR 驗收。
 
 本輪已檢查：Unity 外 Assembly-CSharp-Editor.csproj 與 SurfaceForge.Tests.csproj 以既有單節點、停用共用編譯程序的指令成功，各 0 警告／0 錯誤；最後測試配置修改另編譯成功。Editor 資產匯入 job 9f334490 completed、errorCount=0，僅為程式匯入，不是測試。Main／VR 場景檔與本輪 HEAD 逐位元組正規化比對相同；Markdown 本機檔案連結與差異檢查通過。新增腳本及其 meta 一同提交，既有預覽材質差異仍排除。人工與 Test Runner 皆未執行，故無動畫舒適度、斜坡繞行或實際射線互動通過宣稱。
+
+## 阻斷回報：兩版刪除 UI 未顯示（2026-11-07）
+
+適用基準 ed10e061e3b18c3f0c052d1ced7642dfe729d47e。使用者回報 Main／VR 的刪除 UI 都沒有出現，Console 無 error，導致上一輪動畫及繞行測試無法進行。這是該版的實際失敗回報，不能以先前外部編譯成功視為 UI 通過。
+
+在使用者自行進入 Play Mode、放置並點選 Sphere 後，代理只讀取 API 現場：SimulationContextMenuView.Target=Sphere(Clone)，IsVisible=false；ContextMenu 已有位置／縮放更新但 activeSelf=false，且查無 CanvasGroup。後續讀取時 Target 已清除，符合離開 Game View／失焦會清除的既有流程，不能將這兩次讀值視為原子快照。Console 診斷為 0 error／0 warning。使用者隨後確認已停止 Play Mode；代理沒有進出 Play Mode、模擬輸入或執行測試。
+
+程式可確認的缺口：ContextMenuFade 只在 View.OnEnable 初始化；SetVisible 在 root／group 未綁定時直接返回，不建立圖像或記錄錯誤。現場缺少 CanvasGroup 與此顯示路徑相符，但尚無證據確認首次初始化為何未建立／保留綁定，不將反序列化或執行順序宣稱為已證實的唯一根因。
+
+修正：新增 ContextMenuFade.Show(host,panel)，兩版 RefreshPosition 在顯示前傳入明確 host／panel，檢查執行期綁定與 CanvasGroup；缺少時 Initialize 後才開啟。原開關動畫、快速反向、立即撤銷互動與生命週期清理維持，未修改場景、射線、選取核心、縮放或繞行定位。
+
+兩版既有整合測試各新增 MenuRepairsMissingFadeBindingsBeforeDisplaying：以 JsonUtility 只複製序列化設定、更換 helper 並移除 CanvasGroup，直接透過真正的 View／Selection 顯示入口，檢查面板啟用、CanvasGroup 重建、alpha 到 1，關閉立即撤銷射線。這些案例未由代理執行；它們覆蓋本次初始化缺口，不證明現場最初的觸發因素。
+
+使用者重測（全部待執行）：
+
+1. 等待匯入完成，從 SceneMenu 進 Main，放置 Cube 並點選；預期名稱與 DELETE 淡入，Hierarchy 的 Menu Panel 啟用且有 CanvasGroup，約 0.18 秒後 alpha=1。
+2. 進 VR，放置 Sphere 並用右球射線點選；預期 ContextMenu 啟用且有 CanvasGroup，名稱與 DELETE 可見可點。若仍不顯示，維持現場並回報，繼續唯讀查核 Target、activeSelf、alpha 與 Tween 狀態。
+3. 兩版各測 DELETE 刪除一次、空白清除、快速清除再選取；預期僅刪選中物件，淡出期間不可再刪除，不留下無形 UI 或舊回呼。
+4. 可見性恢復後，再執行上一輪動畫／斜坡本地 Y 軸繞行、三比例及返回回歸，之前被阻斷的案例仍不列為通過。
+5. 使用者可執行 Test Runner 的 SelectionTests、SimulationSelectionTests（目前九項）、ContextMenuFadeTests；本次代理均未執行。
+
+額度規則另依使用者本輪釐清更新：只以 5 小時剩餘 10% 以下（含）判斷暫停，每週額度不列入。先前因每週剩餘 10% 宣告暫停為規則修正前的歷史處理，不再適用；當時尚未寫入修正，也未實際建立 TaskCheckpoint。本輪重新確認 5 小時剩餘 76% 後繼續。
+
+本次外部檢查：Assembly-CSharp-Editor.csproj 與 SurfaceForge.Tests.csproj 皆以單節點／停用共用編譯的 dotnet build 成功，各 0 警告／0 錯誤；桌面測試改用有效選取入口後另編譯成功。Editor 匯入 7688d3c8 completed、errorCount=0，僅為資產匯入。文件連結及差異檢查通過；沒有場景修改、Play Mode 操作或 Test Runner 執行。實際恢復可見與動畫仍待使用者確認。

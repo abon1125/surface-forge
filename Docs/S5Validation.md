@@ -162,3 +162,7 @@ Unity 外檢查：先以 dotnet restore SurfaceForge.Tests.csproj --source Temp 
 ## QA：選單淡入淡出與本地 Y 軸（2026-11-07，待使用者驗證）
 
 目前改為物件本地 Y 軸繞行（含斜坡傾斜），取代上方世界水平面的舊規則；尺寸／半徑改由物件座標包圍盒計算。新增 TiltedPropMenuOrbitsItsLocalYAxis，SimulationSelectionTests 共八項；獨立多 Canvas 遮擋案例明確開啟測試用 CanvasGroup。新增共用 ContextMenuFadeTests 一項，涵蓋 timeScale=0、淡出撤銷射線、快速反向及清理不被舊回呼重開。全部未由代理執行。兩版淡入 0.18 秒、淡出 0.12 秒，關閉立即清除有效目標、完成才停用圖像。操作步驟與實際外部檢查見 [QA 紀錄](QABeforeI2.md) 最新補記；先前七項／其他歷史測試結果仍對應原版本。
+
+### QA 阻斷與初始化補強（2026-11-07）
+
+使用者實測 ed10e06 後回報兩版刪除 UI 均未出現且 Console 無 error，上一節動畫／本地 Y 軸驗證因此未完成。唯讀現場觀察有有效選取、ContextMenu 停用且缺少 CanvasGroup；顯示入口已補上執行期綁定檢查與重建，首次初始化漏失的確切觸發因素仍未證實。新增真正 View 入口的初始化遺失回歸案例，VR 測試目前九項，均未代跑。實際證據、修正範圍及重新測試步驟見 [QA 紀錄](QABeforeI2.md) 最新補記；本次修正仍待使用者確認。

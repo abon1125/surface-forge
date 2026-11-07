@@ -23,6 +23,13 @@ namespace SurfaceForge.UI
             if (root) group = root.GetComponent<CanvasGroup>() ?? root.AddComponent<CanvasGroup>();
             SnapClosed();
         }
+        public void Show(GameObject host, GameObject panel)
+        {
+            // 設定可被 Unity 重新反序列化；顯示時重新確認非序列化的執行期綁定。
+            // 也支援顯示請求先於 OnEnable 初始化到達的情況。
+            if (owner != host || root != panel || !group) Initialize(host, panel);
+            SetVisible(true);
+        }
         public void SetVisible(bool value)
         {
             if (!root || !group || open == value) return;

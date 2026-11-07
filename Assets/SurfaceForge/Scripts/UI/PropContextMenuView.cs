@@ -85,7 +85,7 @@ namespace SurfaceForge.UI
             point.x = Mathf.Clamp(point.x, available.xMin + size.x * pivot.x, available.xMax - size.x * (1 - pivot.x));
             point.y = Mathf.Clamp(point.y, available.yMin + size.y * pivot.y, available.yMax - size.y * (1 - pivot.y));
             panel.localPosition = new Vector3(point.x, point.y, 0);
-            fade.SetVisible(true);
+            fade.Show(gameObject, panel.gameObject);
         }
     }
 }

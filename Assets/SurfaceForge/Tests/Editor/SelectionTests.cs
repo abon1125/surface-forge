@@ -88,6 +88,26 @@ namespace SurfaceForge.Tests
         }
 
         [UnityTest]
+        public IEnumerator MenuRepairsMissingFadeBindingsBeforeDisplaying()
+        {
+            var prop = Spawn("Cube", point);
+            var panel = Field<RectTransform>(menu,"panel");
+            var group = panel.GetComponent<CanvasGroup>();
+            if (group) Object.DestroyImmediate(group);
+            // 模擬只還原序列化設定、沒有執行期參照的 helper。
+            var fade = JsonUtility.FromJson<ContextMenuFade>(JsonUtility.ToJson(new ContextMenuFade()));
+            typeof(PropContextMenuView).GetField("fade", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(menu, fade);
+            typeof(PropSelectionController).GetMethod("SelectAt", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(selection, new object[] { HitPoint(prop) });
+            Assert.That(panel.gameObject.activeSelf, Is.True);
+            Assert.That(panel.GetComponent<CanvasGroup>(), Is.Not.Null);
+            yield return new WaitForSecondsRealtime(.25f);
+            Assert.That(panel.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1).Within(.001f));
+            selection.ClearSelection();
+            Assert.That(menu.Target, Is.Null);
+            Assert.That(panel.GetComponent<CanvasGroup>().blocksRaycasts, Is.False);
+        }
+
+        [UnityTest]
         public IEnumerator AllChildCollidersResolveAndFiftySwitchClearDeleteCycles()
         {
             for (var i = 0; i < 50; i++)

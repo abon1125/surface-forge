@@ -113,7 +113,7 @@ namespace SurfaceForge.UI
                     ? Vector3.forward : Vector3.up;
                 rect.rotation = Quaternion.LookRotation(forward, up);
             }
-            fade.SetVisible(true);
+            fade.Show(gameObject, canvas.gameObject);
         }
     }
 }
