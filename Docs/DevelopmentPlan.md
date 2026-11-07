@@ -8,7 +8,7 @@
 
 最終交付為單一 Windows App：啟動後由場景選單選擇桌面版或 VR 鍵鼠模擬版進行驗收，並可返回選單。先完成桌面 M1–M4 與獨立 VR 模擬場景，再實作選單及整合驗收。交付包含執行檔、實際執行錄影、公開儲存庫連結及可回溯的階段提交紀錄。
 
-VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5 已實作，技術驗證與待人工確認見 [S5 驗證紀錄](S5Validation.md)；選單與建置尚未完成。
+VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5 已實作，技術驗證與待人工確認見 [S5 驗證紀錄](S5Validation.md)；I1 選單與返回入口已實作、待使用者驗證，建置留待 I2。
 
 ## 2. 專案基準與設計決策
 
@@ -176,7 +176,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 ### 場景選單與整合驗收（I1–I2）
 
 - [ ] App 啟動進入 SceneMenu，可分別選擇 Main 或 VRSimulation。
-- [ ] 使用單場景替換載入，不同時保留兩套操作場景；只有一套有效攝影機、AudioListener 與 EventSystem。
+- [ ] 使用非同步 additive Loading 轉場；覆蓋畫面後先卸載來源再載入目標，完成即卸載 Loading。不保留兩套操作場景；Loading 不含攝影機、AudioListener 或 EventSystem，轉場中輸入停用，完成後只有一套有效元件。
 - [ ] 返回選單前清除預覽、指引、選取及輸入狀態，恢復可見且未鎖定的游標；舊場景物件隨卸載清除。
 - [ ] 再次進入任一場景皆從初始狀態開始，不保留已放置道具；不提供跨場景同步或存檔。
 - [ ] 反覆往返至少 10 次，無重複輸入、殘留 UI、遺失參照或意外放置。
@@ -195,7 +195,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 
 ## 9. 建置、錄影與最終交付
 
-1. 在 I1–I2 階段將 SceneMenu、Main 與 VRSimulation 加入同一 Windows x64 Build Profile，以 SceneMenu 為第一個啟動場景，確認視窗可縮放。
+1. 在 I1–I2 階段將 SceneMenu、Main、VRSimulation 與 Loading 加入同一 Windows x64 Build Profile，以 SceneMenu 為第一個啟動場景，確認視窗可縮放；實際建置留待 I2。
 2. 建置至忽略版控的 `Builds/Windows/`；發布時壓縮執行檔與所有必要相鄰檔案，不能只交付 `.exe`。
 3. 在 Editor 外啟動建置，執行完整人工驗收；記錄 Unity 版本、平台、提交 SHA、測試結果與已知限制。
 4. 錄影呈現：啟動選單 → 桌面縮放、清單、放置取消與選取刪除 → 返回選單 → VR 模擬移動、左手面板、右手射線、放置指引及刪除 → 返回選單。實機 XR 僅在已驗證時另行展示。
@@ -216,7 +216,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
 | 指引線 | S4 已實作專用金色指引與落點圓環；測試與待人工確認見 S4Validation |
 | VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3 已實作（技術驗證見 S3Validation，待使用者精準度與舒適度確認）；S4 已實作，驗證見 S4Validation；S5 已實作，技術驗證與人工待確認見 S5Validation |
-| 場景選單 | 兩版完成後於 I1 實作 |
+| 場景選單 | I1 已實作、待使用者基本驗證，見 I1Validation |
 | XR | 選配，待確認設備與時間 |
 | 整合建置與完整驗收 | 待執行；原 M6 延後至 I2 |
 | 錄影、上傳與連結 | 待執行 |
@@ -276,3 +276,18 @@ PR #15 合併後重新 fetch，確認 origin/main 為 fdd6325，再由同步 mai
 
 
 2026-11-07 使用者回報目前測試正常，並要求提交 PR 與審查；確認對應右鍵觀看保留選單修正 8db0f54。未另列逐項案例、解析度或自動測試結果，不擴大為七項 Test Runner、原生連續縮放、Windows 或 XR 已通過。歷史待驗證文字保留其當時狀態，本補記為最新整體人工回報。
+
+### I1 執行狀態（2026-11-07）
+
+重新 fetch 並確認 PR #17 已合併，main 與 origin/main 均為 e315510da4e6c29cc4d9828e9e8f06478f09dd31，從 main 新建 codex/scene-menu-i1。新增 SceneMenu 的兩個驗收入口、Main 左上返回，以及 VR 左手面板下方由既有右球射線操作的返回按鈕。單場景替換、切換前清理互動與游標、重新進入不保存道具；Esc 及既有功能維持。全域／當前場景清單皆以 SceneMenu 為首。
+
+本次只實作 I1 並做 Unity 外編譯與差異檢查；新增生命週期測試但未執行，Unity 內基本功能、三比例及執行中縮放待使用者驗證，詳見 [I1Validation.md](I1Validation.md)。不將既有 S5 的整體確認擴大為本版驗收。I2 至少十次往返、完整整合與 Windows 建置、D1 錄影及實機 XR 留待後續，本次不推送或建立 PR。六個既有未提交檔案保留並排除本次提交。
+
+### I1 Loading 補充（2026-11-07）
+
+使用者確認以轉場期間存在的獨立 Loading 場景替換上述原始 I1 Single 載入決策；上一節保留為 6191902 的歷史狀態。現改非同步 additive 載入 Loading、0.25 秒淡入遮住畫面、卸載來源、additive 載入目標並設為 active scene、進度條至少顯示 1.5 秒、0.25 秒淡出、卸載 Loading。Loading 僅有螢幕覆蓋 Canvas，無 Camera／AudioListener／EventSystem；操作場景不並存，切換前清理及重新進入初始狀態不變。左／右鍵、Tab、Esc 放開並經過無按鍵事件的影格後才恢復目標輸入；不用 DontDestroyOnLoad。
+
+場景清單為 SceneMenu → Main → VRSimulation → Loading。新增／更新的生命週期、進度、timeScale=0 與按鍵延續測試僅編譯未執行，Unity 內驗證仍由使用者操作；最新檢查、步驟與錯誤處理限制見 [I1Validation.md](I1Validation.md) 的 Loading 補記。仍限 I1，本機提交，不推送、不建立 PR，不執行 I2／D1／XR。
+
+
+2026-11-07 使用者回報目前測試正常，並授權提交 PR 與 Codex Review；此整體確認對應 I1 additive Loading 提交 3a373fc。未另列逐項案例、解析度、Test Runner 或故障注入結果，不推定全部自動測試、連續縮放、I2 完整往返、Windows 或 XR 已通過。上述待驗證敘述保留其當時狀態，本補記更新最新人工回報；本次不重跑 Unity 測試，且未授權合併。
