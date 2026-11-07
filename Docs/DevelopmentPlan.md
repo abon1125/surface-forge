@@ -8,7 +8,7 @@
 
 最終交付為單一 Windows App：啟動後由場景選單選擇桌面版或 VR 鍵鼠模擬版進行驗收，並可返回選單。先完成桌面 M1–M4 與獨立 VR 模擬場景，再實作選單及整合驗收。交付包含執行檔、實際執行錄影、公開儲存庫連結及可回溯的階段提交紀錄。
 
-VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5 已實作，技術驗證與待人工確認見 [S5 驗證紀錄](S5Validation.md)；選單與建置尚未完成。
+VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5 已實作，技術驗證與待人工確認見 [S5 驗證紀錄](S5Validation.md)；I1 選單與返回入口已實作、待使用者驗證，建置留待 I2。
 
 ## 2. 專案基準與設計決策
 
@@ -216,7 +216,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
 | 指引線 | S4 已實作專用金色指引與落點圓環；測試與待人工確認見 S4Validation |
 | VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3 已實作（技術驗證見 S3Validation，待使用者精準度與舒適度確認）；S4 已實作，驗證見 S4Validation；S5 已實作，技術驗證與人工待確認見 S5Validation |
-| 場景選單 | 兩版完成後於 I1 實作 |
+| 場景選單 | I1 已實作、待使用者基本驗證，見 I1Validation |
 | XR | 選配，待確認設備與時間 |
 | 整合建置與完整驗收 | 待執行；原 M6 延後至 I2 |
 | 錄影、上傳與連結 | 待執行 |
@@ -276,3 +276,9 @@ PR #15 合併後重新 fetch，確認 origin/main 為 fdd6325，再由同步 mai
 
 
 2026-11-07 使用者回報目前測試正常，並要求提交 PR 與審查；確認對應右鍵觀看保留選單修正 8db0f54。未另列逐項案例、解析度或自動測試結果，不擴大為七項 Test Runner、原生連續縮放、Windows 或 XR 已通過。歷史待驗證文字保留其當時狀態，本補記為最新整體人工回報。
+
+### I1 執行狀態（2026-11-07）
+
+重新 fetch 並確認 PR #17 已合併，main 與 origin/main 均為 e315510da4e6c29cc4d9828e9e8f06478f09dd31，從 main 新建 codex/scene-menu-i1。新增 SceneMenu 的兩個驗收入口、Main 左上返回，以及 VR 左手面板下方由既有右球射線操作的返回按鈕。單場景替換、切換前清理互動與游標、重新進入不保存道具；Esc 及既有功能維持。全域／當前場景清單皆以 SceneMenu 為首。
+
+本次只實作 I1 並做 Unity 外編譯與差異檢查；新增生命週期測試但未執行，Unity 內基本功能、三比例及執行中縮放待使用者驗證，詳見 [I1Validation.md](I1Validation.md)。不將既有 S5 的整體確認擴大為本版驗收。I2 至少十次往返、完整整合與 Windows 建置、D1 錄影及實機 XR 留待後續，本次不推送或建立 PR。六個既有未提交檔案保留並排除本次提交。

@@ -177,7 +177,7 @@ SurfacePlacementQuery 的螢幕入口已轉接世界 Ray。S5 抽出 PropSelecti
 
 維持明確元件與 Inspector 參照，不導入大型框架。UI 事件系統需統一管理，避免桌面與模擬輸入同時送出事件。
 
-場景選單在兩版完成後才實作；目前只預留停用與卸載清理能力，不提前建立選單或切換系統。最終載入與建置規格見第 12 節。
+I1 已實作場景選單、返回及切換前清理；待使用者基本驗證，詳見末節 I1 補記。最終建置與完整驗收留待 I2，第 12 節保留整體交付規格。
 
 ## 9. 開發順序
 
@@ -267,3 +267,11 @@ S5 右鍵觀看更新（2026-11-07）：右鍵觀看保留已完成的選取與�
 
 
 2026-11-07 使用者回報目前測試正常，並要求提交 PR 與審查；確認對應右鍵觀看保留選單修正 8db0f54。未另列逐項案例、解析度或自動測試結果，不擴大為七項 Test Runner、原生連續縮放、Windows 或 XR 已通過。歷史待驗證文字保留其當時狀態，本補記為最新整體人工回報。
+
+## I1 實作補充（2026-11-07）
+
+此節更新第 8、9、12 節的目前狀態，不改寫 S0–S5 歷史驗證。SceneMenu 提供「桌面版驗收」／「VR 模擬驗收」，單場景替換載入。VR 返回按鈕附在既有 PropMenu Canvas 下方（332×44 UI 單位、中心偏移 0,-222），跟隨 Tab 展開、動畫及 CanvasGroup。仍由 SimulationWorldRaycaster 和 SimulationRayInputModule 查詢右球實際射線、距離與場景遮擋；沒有新增有效輸入模組或 GraphicRaycaster。已取得拖曳擁有權時，在返回 UI 放開只取消放置，新點擊才返回。右鍵觀看、Esc、Tab 及原有選取刪除語意不變。
+
+SceneNavigation 等目前 UI click 派送返回後，在 LateUpdate 停用舊輸入、取消拖曳與預覽／指引、清選取與面板、恢復游標，再以 LoadSceneMode.Single 替換；卸載移除舊訂閱及道具，不保存或跨場景同步。再次進入角色回到場景初始配置、面板收合；Main、VRSimulation 仍可直接從 Editor 開啟，不依賴先進選單。全域及目前場景清單為 SceneMenu → Main → VRSimulation。
+
+I1 已實作，Unity 外檢查與新增但未執行的生命週期測試、具體手動步驟及字型限制見 [I1 驗證紀錄](I1Validation.md)。Unity 內測試（含 Test Runner／Play Mode）、兩方向進入／返回／再進入、三比例與執行中縮放皆待使用者執行。I2 的完整反覆往返、邊界整合與 Windows 執行檔、D1 錄影及實機 XR 未開始。
