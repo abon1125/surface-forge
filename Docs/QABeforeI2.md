@@ -164,3 +164,11 @@
 磁碟差異確認使用者調整的是 Overview Camera → TerrainOverviewCamera → Wheel Units Per Step：120 → 3；Zoom Per Step 仍為 1.15。此值為滾輪輸入換算分母，數值越小縮放越快，不將它誤記為 Zoom Per Step=3。Main 正常儲存亦將 Fade 的 0.18／0.12 秒與 Ease=OutCubic／InCubic 預設值寫入場景，與現行程式一致，一併納入。本輪未手改場景 YAML，未重新調整使用者設定，也沒有因純 Inspector 調參重跑 Unity 測試。
 
 本次 PR 包含整個 codex/qa-before-i2 自 main 分出後的 QA 與規範／文件提交；排除並保留 SimulationPreviewValid.mat 既有未提交差異，未強制還原。以 GitHub Codex Review 審查最新提交並追蹤實際結果，不以代理自行檢查代替、不自行合併。
+
+## 納入預覽材質同步差異（2026-11-07）
+
+PR #21 初次審查後，使用者明確要求提交先前排除的 SimulationPreviewValid.mat。此次只有 `_Color` 從 alpha=1 同步為 0.35，與未變動的 `_BaseColor` 一致，並包含 r 分量的浮點序列化差異；Shader、keywords、render queue、blend、ZWrite 等其餘設定完全不變。
+
+本機 URP 17.3.0 的 Editor/ShaderGUI/BaseShaderGUI.cs:939–940 明確將 `_BaseColor` 複製至 `_Color`；Unlit.shader 以 _BaseColor 為 MainColor，_Color 為隱藏欄位。因此將這份正常同步結果納入版控，不再沿用本文件前面「保留但排除」的歷史決策；沒有在磁碟手改 Unity YAML。先前排除是 QA 範圍判斷，不是禁止提交的規則。
+
+本次只核對材質單行差異、URP 來源與 staged diff，未新增視覺調整或重跑 Unity／Windows／XR 測試。使用者此前整體正常回報是於這份差異已存在的本機工作區進行，仍不擴大為所有案例通過。提交後推送既有 PR #21，更新其最終差異說明並審查最新 head；不自行合併。
