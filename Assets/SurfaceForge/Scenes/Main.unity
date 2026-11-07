@@ -156,6 +156,11 @@ MonoBehaviour:
   deleteButton: {fileID: 302807474}
   offset: {x: 24, y: 24}
   padding: 12
+  fade:
+    openDuration: 0.18
+    closeDuration: 0.12
+    openEase: 9
+    closeEase: 8
 --- !u!224 &715896
 RectTransform:
   m_ObjectHideFlags: 0
@@ -215,7 +220,7 @@ MonoBehaviour:
   zoomPerStep: 1.15
   minimumZoom: 0.35
   maximumZoom: 1.5
-  wheelUnitsPerStep: 120
+  wheelUnitsPerStep: 3
 --- !u!114 &2725457
 MonoBehaviour:
   m_ObjectHideFlags: 0

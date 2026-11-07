@@ -170,3 +170,7 @@ Unity 外檢查：先以 dotnet restore SurfaceForge.Tests.csproj --source Temp 
 ### 根因修正與 API 定點測試（2026-11-07）
 
 使用者再次回報 1b92f9e 後兩版皆未顯示，並明確允許 Unity Skills 進出 Play Mode 與自動測試，僅禁止 Computer Use 操作 Unity。實際 ContextMenuFadeTests 重現 MissingComponentException：Unity 的缺少元件 wrapper 使 CLR `??` 沒有執行 AddComponent。已改用 Unity `if (!group)` 判斷；共用動畫與 Main 顯示入口的定點案例通過，VR 在隔離背景焦點輸入後也通過顯示、右球世界射線命中 DELETE 與單次刪除。這些結果採核對時間／名稱的 Test Runner XML，因 Unity Skills job 在 domain reload 後遺失追蹤；失敗輪次、工具限制及各份 XML 備份詳見 [QA 紀錄](QABeforeI2.md) 最新補記。未執行完整九項、原生輸入／比例矩陣或人工觀感驗收，不將歷史未執行項目改列通過。
+
+### 使用者正常回報（2026-11-07）
+
+使用者在 6d4e2a1 的 CanvasGroup 根因修正及定點測試後回報「以上測試正常」，並授權 PR 與 Codex Review。記錄為目前 QA 的整體人工確認，不擴大為完整九項自動套件、比例／縮放矩陣或 I2／Windows／XR 通過。Main 的 Wheel Units Per Step=3 與 PR 範圍見 [QA 紀錄](QABeforeI2.md) 最新補記；先前失敗／待驗證段落保留其當時事實。

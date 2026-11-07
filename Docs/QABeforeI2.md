@@ -156,3 +156,11 @@
 以上是三個不同定點案例的最終通過證據，不是一次完整套件 3/3，也不掩蓋前面的失敗。49db0f54 同樣有工具工作重載追蹤失敗，結果以核對名稱及時間的新 XML 為準。外部 Editor／Tests 專案編譯成功，各 0 警告／0 錯誤，最終 VR 測試另編譯成功；程式與文件差異／本機 Markdown 連結檢查通過。未修改 Main／VR 場景、套件或正式輸入防護，既有預覽材質差異保留排除。
 
 未執行整個 SelectionTests／SimulationSelectionTests 套件、原生滑鼠輸入矩陣、三比例／連續縮放、I2／Windows／D1／XR；沒有截圖或人工視覺驗收。手動重測可從 SceneMenu 進兩版各放置／選取／DELETE 一次，再檢查快速開合、斜坡繞行與返回。上述定點成功不擴大為所有原有互動已驗收。
+
+## 使用者確認、Main 滾輪設定與 PR 授權（2026-11-07）
+
+使用者在 6d4e2a1190a58948a196935dfdef99e74b8484a7 修正後回報「以上測試正常」，並表示已將 Main 滾動速度改成 3，授權「提交 PR 並審查」。記錄為上述 QA 的整體人工測試確認，不推定完整套件、三比例／連續縮放、原生輸入矩陣、I2／Windows／D1 或 XR 已通過。前節未執行及失敗結果均保留原適用版本，不改寫歷史。
+
+磁碟差異確認使用者調整的是 Overview Camera → TerrainOverviewCamera → Wheel Units Per Step：120 → 3；Zoom Per Step 仍為 1.15。此值為滾輪輸入換算分母，數值越小縮放越快，不將它誤記為 Zoom Per Step=3。Main 正常儲存亦將 Fade 的 0.18／0.12 秒與 Ease=OutCubic／InCubic 預設值寫入場景，與現行程式一致，一併納入。本輪未手改場景 YAML，未重新調整使用者設定，也沒有因純 Inspector 調參重跑 Unity 測試。
+
+本次 PR 包含整個 codex/qa-before-i2 自 main 分出後的 QA 與規範／文件提交；排除並保留 SimulationPreviewValid.mat 既有未提交差異，未強制還原。以 GitHub Codex Review 審查最新提交並追蹤實際結果，不以代理自行檢查代替、不自行合併。
