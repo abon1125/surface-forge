@@ -1,5 +1,7 @@
 # S5 射線選取與刪除驗證紀錄
 
+> 2026-11-07 QA 現況：PR #18（I1）、#19（設定整理）已合併；S5／I1 的使用者整體正常回報保留原適用版本，不視為本次重驗。原「六檔排除」為歷史限制，已結束；舊 TaskCheckpoint 不再作為現況來源。本次 Unity 內測試由使用者執行，新增操作說明及選單高度的驗證見 [QABeforeI2.md](QABeforeI2.md)。設定整理後的重新開啟、畫面及儲存穩定性仍待確認。
+
 > 2026-11-07 操作與驗證規則釐清：本文將 Unity 內自動測試交由使用者執行的舊限制，已由 [AGENT.md](../AGENT.md#驗證與完成定義) 取代。代理可透過 Unity Skills Editor API 或命令列執行編譯及 Editor／EditMode／PlayMode 自動測試，包括測試所需的進出 Play Mode；禁止使用 Codex Computer Use 操作 Unity 圖形介面。下文保留當時測試未執行及使用者 Test Runner 操作步驟的歷史紀錄，不代表目前禁止代理執行，也不改列通過。使用者親自點擊、拖曳、移動及畫面、手感與功能的人工驗收仍須另行回報；未回報項目仍為「待使用者驗證」，自動測試通過不能代替人工驗收。
 
 日期：2026-11-06–07（Asia/Taipei）。Unity 6000.3.25f1／Windows Editor，沿用 URP、Input System、UGUI 與 DOTween 1.3.045，未新增 XR 或升級套件。
@@ -156,3 +158,19 @@ Unity 外檢查：先以 dotnet restore SurfaceForge.Tests.csproj --source Temp 
 
 
 2026-11-07 使用者回報目前測試正常，並要求提交 PR 與審查；確認對應右鍵觀看保留選單修正 8db0f54。未另列逐項案例、解析度或自動測試結果，不擴大為七項 Test Runner、原生連續縮放、Windows 或 XR 已通過。歷史待驗證文字保留其當時狀態，本補記為最新整體人工回報。
+
+## QA：選單淡入淡出與本地 Y 軸（2026-11-07，待使用者驗證）
+
+目前改為物件本地 Y 軸繞行（含斜坡傾斜），取代上方世界水平面的舊規則；尺寸／半徑改由物件座標包圍盒計算。新增 TiltedPropMenuOrbitsItsLocalYAxis，SimulationSelectionTests 共八項；獨立多 Canvas 遮擋案例明確開啟測試用 CanvasGroup。新增共用 ContextMenuFadeTests 一項，涵蓋 timeScale=0、淡出撤銷射線、快速反向及清理不被舊回呼重開。全部未由代理執行。兩版淡入 0.18 秒、淡出 0.12 秒，關閉立即清除有效目標、完成才停用圖像。操作步驟與實際外部檢查見 [QA 紀錄](QABeforeI2.md) 最新補記；先前七項／其他歷史測試結果仍對應原版本。
+
+### QA 阻斷與初始化補強（2026-11-07）
+
+使用者實測 ed10e06 後回報兩版刪除 UI 均未出現且 Console 無 error，上一節動畫／本地 Y 軸驗證因此未完成。唯讀現場觀察有有效選取、ContextMenu 停用且缺少 CanvasGroup；顯示入口已補上執行期綁定檢查與重建，首次初始化漏失的確切觸發因素仍未證實。新增真正 View 入口的初始化遺失回歸案例，VR 測試目前九項，均未代跑。實際證據、修正範圍及重新測試步驟見 [QA 紀錄](QABeforeI2.md) 最新補記；本次修正仍待使用者確認。
+
+### 根因修正與 API 定點測試（2026-11-07）
+
+使用者再次回報 1b92f9e 後兩版皆未顯示，並明確允許 Unity Skills 進出 Play Mode 與自動測試，僅禁止 Computer Use 操作 Unity。實際 ContextMenuFadeTests 重現 MissingComponentException：Unity 的缺少元件 wrapper 使 CLR `??` 沒有執行 AddComponent。已改用 Unity `if (!group)` 判斷；共用動畫與 Main 顯示入口的定點案例通過，VR 在隔離背景焦點輸入後也通過顯示、右球世界射線命中 DELETE 與單次刪除。這些結果採核對時間／名稱的 Test Runner XML，因 Unity Skills job 在 domain reload 後遺失追蹤；失敗輪次、工具限制及各份 XML 備份詳見 [QA 紀錄](QABeforeI2.md) 最新補記。未執行完整九項、原生輸入／比例矩陣或人工觀感驗收，不將歷史未執行項目改列通過。
+
+### 使用者正常回報（2026-11-07）
+
+使用者在 6d4e2a1 的 CanvasGroup 根因修正及定點測試後回報「以上測試正常」，並授權 PR 與 Codex Review。記錄為目前 QA 的整體人工確認，不擴大為完整九項自動套件、比例／縮放矩陣或 I2／Windows／XR 通過。Main 的 Wheel Units Per Step=3 與 PR 範圍見 [QA 紀錄](QABeforeI2.md) 最新補記；先前失敗／待驗證段落保留其當時事實。

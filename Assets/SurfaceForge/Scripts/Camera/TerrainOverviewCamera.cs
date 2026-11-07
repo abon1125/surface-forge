@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SurfaceForge
 {
@@ -7,10 +8,45 @@ namespace SurfaceForge
     {
         [SerializeField] private RectTransform sidebar;
         [SerializeField] private Terrain terrain;
+        [SerializeField] private PlacementController placement;
+        [SerializeField] private SceneNavigation navigation;
+        [SerializeField, Min(1.01f)] private float zoomPerStep = 1.15f;
+        [SerializeField, Range(.1f, 1)] private float minimumZoom = .35f;
+        [SerializeField, Min(1)] private float maximumZoom = 1.5f;
+        [SerializeField, Min(.01f)] private float wheelUnitsPerStep = 120f;
+        private float zoom = 1;
+        private bool focused = true, paused, requireWheelIdle = true;
         private Camera overview;
         private readonly Vector3[] corners = new Vector3[4];
 
         private void Awake() => overview = GetComponent<Camera>();
+        private void OnEnable() { zoom = 1; requireWheelIdle = true; }
+        private void OnDisable() { zoom = 1; requireWheelIdle = true; }
+        private void OnApplicationFocus(bool value) { focused = value; requireWheelIdle = true; }
+        private void OnApplicationPause(bool value) { paused = value; requireWheelIdle = true; }
+
+        private bool CanZoom(Vector2 point)
+        {
+            if (!focused || paused || !Application.isFocused || !overview.pixelRect.Contains(point)
+                || !placement || !navigation || navigation.IsTransitionPending
+                || placement.IsDragging || Mouse.current.leftButton.isPressed || placement.IsOverUI(point)) return false;
+#if UNITY_EDITOR
+            var window = UnityEditor.EditorWindow.focusedWindow;
+            var over = UnityEditor.EditorWindow.mouseOverWindow;
+            if (!window || window.GetType().Name != "GameView" || !over || over.GetType().Name != "GameView") return false;
+#endif
+            return true;
+        }
+
+        // 中斷後先等一個無滾輪輸入的影格，避免沿用回焦或轉場中的 delta。
+        private void ApplyWheel(float delta, bool allowed)
+        {
+            if (!allowed) { requireWheelIdle = true; return; }
+            if (requireWheelIdle) { if (Mathf.Approximately(delta, 0)) requireWheelIdle = false; return; }
+            float steps = Mathf.Clamp(delta / Mathf.Max(.01f, wheelUnitsPerStep), -10, 10);
+            zoom = Mathf.Clamp(zoom * Mathf.Pow(Mathf.Max(1.01f, zoomPerStep), -steps),
+                Mathf.Clamp(minimumZoom, .1f, 1), Mathf.Max(1, maximumZoom));
+        }
 
         private void LateUpdate()
         {
@@ -32,7 +68,9 @@ namespace SurfaceForge
                 halfHeight = Mathf.Max(halfHeight, Mathf.Abs(offset.y));
             }
             float aspect = Mathf.Max(0.1f, Screen.width * width / Screen.height);
-            overview.orthographicSize = Mathf.Max(halfHeight, halfWidth / aspect) * 1.12f;
+            var mouse = Mouse.current;
+            ApplyWheel(mouse != null ? mouse.scroll.ReadValue().y : 0, mouse != null && CanZoom(mouse.position.ReadValue()));
+            overview.orthographicSize = Mathf.Max(halfHeight, halfWidth / aspect) * 1.12f * zoom;
         }
     }
 }

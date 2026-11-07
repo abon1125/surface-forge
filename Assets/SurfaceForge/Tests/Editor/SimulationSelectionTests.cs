@@ -238,6 +238,7 @@ namespace SurfaceForge.Tests
             yield return Open();var left=Field<Canvas>(raycaster,"menuCanvas");
             var leftMenu=left.transform.parent.GetComponent<SimulationPropMenu>();leftMenu.enabled=false;
             context.enabled=false;module.enabled=false;selection.enabled=false;left.gameObject.SetActive(true);canvas.gameObject.SetActive(true);
+            var contextGroup=canvas.GetComponent<CanvasGroup>();contextGroup.alpha=1;contextGroup.blocksRaycasts=true;contextGroup.interactable=true;
             var group=left.GetComponent<CanvasGroup>();group.blocksRaycasts=true;group.alpha=1;
             var camera=raycaster.ViewCamera;var origin=camera.transform.position;
             var direction=camera.transform.forward;
@@ -302,6 +303,58 @@ namespace SurfaceForge.Tests
             Assert.That(Object.FindFirstObjectByType<SimulationSelectionController>().Selected,Is.Null);
             Assert.That(Object.FindFirstObjectByType<SimulationContextMenuView>().Target,Is.Null);
         }
+        [UnityTest] public IEnumerator MenuRepairsMissingFadeBindingsBeforeDisplaying()
+        {
+            // 此案例驗證呈現／世界射線，不依賴原生 Game View 焦點。
+            // 先關閉會在背景每幀清選取的輸入路由，再由選取入口建立目標。
+            module.enabled = false;
+            var prop = Spawn(0);
+            var canvas = Field<Canvas>(context,"canvas");
+            var group = canvas.GetComponent<CanvasGroup>();
+            if (group) Object.DestroyImmediate(group);
+            var fade = JsonUtility.FromJson<ContextMenuFade>(JsonUtility.ToJson(new ContextMenuFade()));
+            typeof(SimulationContextMenuView).GetField("fade",Private).SetValue(context,fade);
+            selection.Select(prop);
+            Assert.That(context.Target, Is.SameAs(prop));
+            Assert.That(context.IsVisible, Is.True);
+            Assert.That(canvas.GetComponent<CanvasGroup>(), Is.Not.Null);
+            yield return new WaitForSecondsRealtime(.25f);
+            Assert.That(context.Target, Is.SameAs(prop));
+            Assert.That(canvas.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1).Within(.001f));
+            var button = Field<Button>(context,"deleteButton");
+            var ray = new Ray(raycaster.RayOrigin.position, (button.transform.position - raycaster.RayOrigin.position).normalized);
+            Assert.That(raycaster.Query(ray).UI, Is.EqualTo(button.gameObject));
+            button.onClick.Invoke();
+            Assert.That(selection.Selected, Is.Null);
+            Assert.That(prop.gameObject.activeSelf, Is.False);
+            Assert.That(canvas.GetComponent<CanvasGroup>().blocksRaycasts, Is.False);
+        }
+
+        [UnityTest] public IEnumerator TiltedPropMenuOrbitsItsLocalYAxis()
+        {
+            var prop = Spawn(0);
+            prop.transform.rotation = Quaternion.Euler(25, 35, 20);
+            foreach (var collider in prop.GetComponentsInChildren<Collider>()) collider.isTrigger = true;
+            Physics.SyncTransforms();
+            var camera = raycaster.ViewCamera;
+            var original = camera.transform.position;
+            var rect = (RectTransform)Field<Canvas>(context,"canvas").transform;
+            var axis = prop.transform.up;
+            var center = prop.transform.TransformPoint(new Vector3(0,.75f,0));
+            float expectedRadius = Mathf.Sqrt(2 * .75f * .75f) + .15f;
+            for (int angle = 0; angle < 360; angle += 45)
+            {
+                var direction = Quaternion.AngleAxis(angle, axis) * prop.transform.forward;
+                camera.transform.position = center + direction * 5 + axis * 2;
+                selection.Select(prop); Call(context,"RefreshPosition");
+                var offset = rect.position - center;
+                Assert.That(Vector3.Dot(offset, axis), Is.EqualTo(.45f).Within(.001f));
+                Assert.That(Vector3.Distance(Vector3.ProjectOnPlane(offset, axis), direction * expectedRadius), Is.LessThan(.001f));
+            }
+            camera.transform.position = original; selection.ClearSelection(); Object.Destroy(prop.gameObject);
+            yield return Frames();
+        }
+
         [UnityTest] public IEnumerator OrbitMenuStaysOnViewerSideWithStableHeightAndSize()
         {
             var camera=raycaster.ViewCamera;var rect=(RectTransform)Field<Canvas>(context,"canvas").transform;
@@ -322,7 +375,7 @@ namespace SurfaceForge.Tests
                     var toward=Quaternion.Euler(0,angle,0)*Vector3.forward;
                     camera.aspect=aspect;camera.transform.position=bounds.center+toward*distance+Vector3.up*2;
                     selection.Select(prop);Call(context,"RefreshPosition");
-                    var expected=bounds.center+Vector3.up*(bounds.size.y*.6f)+toward*radius;
+                    var expected=bounds.center+Vector3.up*(bounds.size.y*.3f)+toward*radius;
                     Assert.That(context.IsVisible,Is.True);
                     Assert.That(Vector3.Distance(rect.position,expected),Is.LessThan(.0001f));
                     Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(extent*.5f).Within(.0001f));
@@ -341,7 +394,7 @@ namespace SurfaceForge.Tests
                     +Vector3.forward*(radius+extent*.1f+bounds.size.z*.3f);
                 Assert.That(Vector3.Distance(rect.position,custom),Is.LessThan(.0001f));
                 Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(extent*.75f).Within(.0001f));
-                typeof(SimulationContextMenuView).GetField("offsetRatio",Private).SetValue(context,new Vector3(0,.6f,0));
+                typeof(SimulationContextMenuView).GetField("offsetRatio",Private).SetValue(context,new Vector3(0,.3f,0));
                 typeof(SimulationContextMenuView).GetField("widthRatio",Private).SetValue(context,.5f);
                 typeof(SimulationContextMenuView).GetField("orbitGapRatio",Private).SetValue(context,.1f);
                 selection.ClearSelection();Object.DestroyImmediate(prop.gameObject);
