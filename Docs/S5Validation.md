@@ -2,6 +2,8 @@
 
 日期：2026-11-06–07（Asia/Taipei）。Unity 6000.3.25f1／Windows Editor，沿用 URP、Input System、UGUI 與 DOTween 1.3.045，未新增 XR 或升級套件。
 
+> 最新狀態：本文末段「物件附著式選單」取代先前定位規則；本次待使用者驗證。歷史通過結果不代表新版本通過。
+
 > 2026-11-07 顯示調整：使用者要求近距離／視野邊緣不要自動隱藏。下列初次交付內容以 d3147cd 為歷史基準，其隱藏規則由文件末段的顯示調整取代；歷史測試與 SHA／job 保留。
 
 ## 起始狀態與範圍
@@ -94,3 +96,26 @@ Input System Mouse／Keyboard 為測試裝置；S5／S4 測試暫時停用其他
 本次只修改 VR 選單定位、相關 S5 測試及目前說明，沒有更改輸入、共用選取／刪除核心、桌面場景、共享資產、S1–S4 參數、場景／建置設定或 I1／I2。編譯 e614e0ad completed、errorCount=0。S5 重驗 **9549df48 completed，6/6 通過，零失敗／略過**（246 秒）；新增三比例 × 四距離（0.15／0.5／1.2／3 m）× 五位置的完整四角檢查，以及調整後正式世界 Ray 命中 DELETE；近距離測試道具暫時設為 trigger 以避免推動角色，遮擋保留由原有正式實體案例驗證。離屏 PNG 是 Camera.Render，不能視為原生比例／連續縮放或人工驗收。
 
 實際檢視三張邊緣離屏 PNG，選單完整在畫面內、名稱及 DELETE 可讀。60 組四角檢查與三比例世界 Ray 命中均通過，原有切換／清除／刪除、遮擋及生命週期五項也一併重跑。63 個保護檔案雜湊相同，沒有新增或修改場景／meta／LFS 資產。此次未重跑桌面測試、完整 38 項或原生焦點／連續縮放；先前證據維持歷史，不能視為此次重跑。
+
+
+## 物件附著式選單（2026-11-07，待使用者驗證）
+
+使用者回報此前點選刪除正常，但不接受位置自動變動與距離隱藏，因此本節取代前述兩版選單定位。
+
+選單改為附著物件：以有效 Collider 世界包圍盒中心加上世界軸向偏移，預設 Offset Ratio=(0, 0.6, 0)，各軸分別乘包圍盒寬／高／深。Width Ratio 預設 0.5，選單寬為包圍盒最大邊長的一半，維持 260:120 寬高比；兩項皆可在 SimulationSelection 的 SimulationContextMenuView Inspector 調整。選單始終面向觀看者並保持世界向上。移除距離縮放、15 m 隱藏、最小深度、畫面邊緣夾限及自動前移；攝影機移動只改變朝向，不改位置或實際尺寸。近遠、畫面外或攝影機後方不主動停用 Canvas，自然透視、裁切及場景遮擋仍有效，由使用者移動至適當位置。右球射線上限仍為 100 m，這與選單顯示限制不同。
+
+僅修改選單定位、相應測試與文件，不修改場景 YAML、共享資產、輸入路由或刪除核心。新序列化欄位使用程式預設值，無須手動重接參照；舊定位欄位已移除。本次依 AGENT.md 不操作 Unity 圖形介面、不執行 Editor 測試或 Play Mode。既有測試結果全部維持歷史事實；更新後六項 S5 測試尚未執行。
+
+### 使用者操作步驟與預期結果
+
+1. 開啟 VRSimulation，等待 Unity 完成編譯，確認 Console 無編譯錯誤。選取 Hierarchy 的 SimulationSelection，確認 SimulationContextMenuView 顯示 Offset Ratio=(0,0.6,0)、Width Ratio=0.5。
+2. 進入 Play Mode，以既有左手清單放置 Cube、Sphere、Cylinder、Cone，再用右球射線逐一選取。預期名稱／DELETE 在物件中心偏上，寬約最大邊長一半；切換目標時更新名稱與位置。
+3. 向物件靠近、遠離至超過 15 m，再繞到另一側。預期面板中心不漂移、實際尺寸不變，文字面向觀看者；視覺大小自然改變，畫面外或被擋住可自行移動找回。需在既有 100 m 射線範圍內操作。
+4. Play Mode 中將 Offset Ratio 的 Y 改為 1、Width Ratio 改為 0.75。預期面板升高並變寬；測試後退出 Play Mode，避免誤認執行期設定已儲存。若需永久調整，在非 Play Mode 設定並儲存場景。
+5. 射線點 DELETE，預期僅刪除該實例、關閉選單，之後仍可放置、選取及刪除。另測空白清除、Esc、新拖曳、按住移出再放開、失焦回復，預期無誤刪或穿透。
+6. 以 16:9、4:3、寬螢幕及執行中縮放重試。預期不為保持畫面可見而改變世界位置／尺寸，射線仍對應 UI；近裁切與場景遮擋屬預期行為。
+7. 選用自動案例：Window > General > Test Runner > EditMode，執行 SurfaceForge.Tests.SimulationSelectionTests 全部六項。測試會自行進出 Play Mode，請讓 Game View 保持可互動，回報結果與失敗訊息。本次已將舊畫面內四角斷言替換為物件比例／固定位置／朝向與自訂參數斷言，保留其他生命週期及遮擋案例。
+
+上述項目目前全部為待使用者驗證，不將先前 6/6 當作本次結果。
+
+Unity 外檢查：先以 dotnet restore SurfaceForge.Tests.csproj --source Temp 離線產生 Temp 內的還原資料，再執行 dotnet build SurfaceForge.Tests.csproj --no-restore --verbosity quiet，成功，0 警告／0 錯誤；此為 Unity 產生專案的外部 C# 編譯，不代表 Unity Editor 匯入或六項互動測試通過。git diff --check 通過。未操作 Unity API、圖形介面或啟動 Play Mode。

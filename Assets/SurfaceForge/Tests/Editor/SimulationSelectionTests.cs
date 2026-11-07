@@ -238,14 +238,14 @@ namespace SurfaceForge.Tests
             var original=prop.transform.position;var camera=raycaster.ViewCamera;
             var deleteButton=Field<Button>(context,"deleteButton");var deletePoint=ScreenAt(deleteButton.transform);
             yield return MouseAt(deletePoint,true);Assert.That(module.HasPress,Is.True);
-            prop.transform.position=camera.transform.position-camera.transform.forward*3;yield return Frames();
-            Assert.That(module.HasPress,Is.False,"選單隱藏取消舊按下");
-            prop.transform.position=original;yield return Frames();yield return MouseAt(deletePoint);
+            context.gameObject.SetActive(false);
+            yield return MouseAt(deletePoint,true);Assert.That(module.HasPress,Is.False,"選單隱藏取消舊按下");
+            context.gameObject.SetActive(true);yield return Frames();yield return MouseAt(deletePoint);
             Assert.That(prop.gameObject.activeSelf,Is.True,"重新可見後不能沿用舊按下刪除");
-            var colliders=prop.GetComponentsInChildren<Collider>();foreach(var c in colliders)c.enabled=false;
+            // 距離與視野不再停用選單；自然裁切不等於 Canvas 被停用。
             foreach(var position in new[]{camera.transform.position-camera.transform.forward*3,camera.transform.position+camera.transform.forward*20})
-            {prop.transform.position=position;yield return Frames();Assert.That(context.IsVisible,Is.False);}
-            prop.transform.position=original;foreach(var c in colliders)c.enabled=true;Physics.SyncTransforms();yield return Frames();Assert.That(context.IsVisible,Is.True,"selected="+selection.Selected+" target="+context.Target+" camera="+camera.transform.position);
+            {prop.transform.position=position;Physics.SyncTransforms();selection.Select(prop);Assert.That(context.IsVisible,Is.True);}
+            prop.transform.position=original;Physics.SyncTransforms();selection.Select(prop);yield return Frames();
             prop.enabled=false;yield return Frames();Assert.That(selection.Selected,Is.Null);Assert.That(context.Target,Is.Null);prop.enabled=true;
             yield return Click(HitPoint(prop));yield return Open();yield return Drag();Assert.That(selection.Selected,Is.Null);
             yield return MouseAt(GroundScreen());Assert.That(selection.Selected,Is.Null);Clean();
@@ -284,47 +284,37 @@ namespace SurfaceForge.Tests
             Assert.That(Object.FindFirstObjectByType<SimulationSelectionController>().Selected,Is.Null);
             Assert.That(Object.FindFirstObjectByType<SimulationContextMenuView>().Target,Is.Null);
         }
-        [UnityTest] public IEnumerator NearAndEdgeMenusStayInsideThreeAspectRatios()
+        [UnityTest] public IEnumerator AttachedMenuKeepsWorldPositionAndSizeAcrossViewChanges()
         {
             var prop=Spawn(0);var camera=raycaster.ViewCamera;
-            // 配置測試使用 trigger，避免近距離樣本推動角色；遮擋由既有案例獨立驗證。
             foreach(var collider in prop.GetComponentsInChildren<Collider>())collider.isTrigger=true;
-            var canvas=Field<Canvas>(context,"canvas");var corners=new Vector3[4];
+            var rect=(RectTransform)Field<Canvas>(context,"canvas").transform;
+            var cameraPosition=camera.transform.position;var cameraRotation=camera.transform.rotation;
             float originalAspect=camera.aspect;
-            foreach(var ratio in new[]{16f/9,4f/3,1720f/720})
+            foreach(float scale in new[]{.5f,1f,2f})
             {
-                camera.aspect=ratio;
-                foreach(float depth in new[]{.15f,.5f,1.2f,3f})
-                foreach(var offset in new[]{Vector2.zero,new Vector2(-6,0),new Vector2(6,0),new Vector2(0,5),new Vector2(0,-5)})
+                prop.transform.localScale=Vector3.one*scale;Physics.SyncTransforms();selection.Select(prop);
+                var bounds=prop.GetComponentInChildren<Collider>().bounds;
+                var expected=bounds.center+Vector3.Scale(bounds.size,new Vector3(0,.6f,0));
+                float width=Mathf.Max(bounds.size.x,bounds.size.y,bounds.size.z)*.5f;
+                foreach(float ratio in new[]{16f/9,4f/3,1720f/720})
+                foreach(var offset in new[]{new Vector3(0,0,.15f),new Vector3(0,0,20),new Vector3(20,0,0),new Vector3(0,0,-3)})
                 {
-                    prop.transform.position=camera.transform.position+camera.transform.forward*depth+camera.transform.right*offset.x+camera.transform.up*offset.y-Vector3.up*.75f;
-                    Physics.SyncTransforms();selection.Select(prop);Canvas.ForceUpdateCanvases();
-                    Assert.That(context.IsVisible,Is.True,"ratio="+ratio+" depth="+depth+" offset="+offset);
-                    ((RectTransform)canvas.transform).GetWorldCorners(corners);
-                    foreach(var corner in corners)
-                    {
-                        var point=camera.WorldToViewportPoint(corner);
-                        Assert.That(point.z,Is.GreaterThan(camera.nearClipPlane));
-                        Assert.That(point.x,Is.InRange(.039f,.961f));Assert.That(point.y,Is.InRange(.039f,.961f));
-                    }
+                    camera.aspect=ratio;camera.transform.position=expected-offset;
+                    Call(context,"RefreshPosition");Canvas.ForceUpdateCanvases();
+                    Assert.That(context.IsVisible,Is.True);
+                    Assert.That(Vector3.Distance(rect.position,expected),Is.LessThan(.0001f));
+                    Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(width).Within(.0001f));
+                    Assert.That(Vector3.Dot(rect.forward,offset.normalized),Is.GreaterThan(.999f));
                 }
-                // 正式世界 Ray 必須仍可命中新位置的 DELETE。
-                var button=Field<Button>(context,"deleteButton");
-                prop.transform.position=camera.transform.position+camera.transform.forward*1.2f-Vector3.up*.75f;
-                Physics.SyncTransforms();selection.Select(prop);Canvas.ForceUpdateCanvases();yield return Frames();
-                var ray=new Ray(raycaster.RayOrigin.position,(button.transform.position-raycaster.RayOrigin.position).normalized);
-                Assert.That(raycaster.Query(ray).UI,Is.EqualTo(button.gameObject));
-                // 離屏構圖：目標位於視野右側外，世界選單仍在右側可視範圍。
-                prop.transform.position=camera.transform.position+camera.transform.forward*3+camera.transform.right*6-Vector3.up*.75f;
-                Physics.SyncTransforms();selection.Select(prop);Canvas.ForceUpdateCanvases();
-                int width=ratio==4f/3?1024:ratio==16f/9?1280:1720;int height=width==1024?768:720;
-                var rt=new RenderTexture(width,height,24);var previous=RenderTexture.active;camera.targetTexture=rt;
-                camera.Render();RenderTexture.active=rt;
-                var texture=new Texture2D(width,height,TextureFormat.RGB24,false);texture.ReadPixels(new Rect(0,0,width,height),0,0);texture.Apply();
-                System.IO.Directory.CreateDirectory("Temp/S5EdgeEvidence");System.IO.File.WriteAllBytes("Temp/S5EdgeEvidence/edge-"+width+".png",texture.EncodeToPNG());
-                camera.targetTexture=null;RenderTexture.active=previous;rt.Release();Object.Destroy(rt);Object.Destroy(texture);
             }
-            camera.aspect=originalAspect;
+            typeof(SimulationContextMenuView).GetField("offsetRatio",Private).SetValue(context,new Vector3(.2f,1,0));
+            typeof(SimulationContextMenuView).GetField("widthRatio",Private).SetValue(context,.75f);
+            var finalBounds=prop.GetComponentInChildren<Collider>().bounds;Call(context,"RefreshPosition");
+            Assert.That(Vector3.Distance(rect.position,finalBounds.center+Vector3.Scale(finalBounds.size,new Vector3(.2f,1,0))),Is.LessThan(.0001f));
+            Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(Mathf.Max(finalBounds.size.x,finalBounds.size.y,finalBounds.size.z)*.75f).Within(.0001f));
+            camera.aspect=originalAspect;camera.transform.SetPositionAndRotation(cameraPosition,cameraRotation);
+            yield return Frames();
         }
     }
 }

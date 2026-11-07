@@ -12,10 +12,10 @@ namespace SurfaceForge.UI
         [SerializeField] private Text targetName;
         [SerializeField] private Button deleteButton;
         [SerializeField] private Vector2 size = new Vector2(260, 120);
-        [SerializeField, Min(.0001f)] private float metresPerPixel = .002f;
-        [SerializeField, Min(.1f)] private float referenceDistance = 2;
-        [SerializeField, Min(0)] private float gap = .15f;
-        [SerializeField] private Vector2 readableDistance = new Vector2(.6f, 15);
+        [SerializeField, Tooltip("世界軸向偏移，分別乘以物件包圍盒的寬、高、深。")]
+        private Vector3 offsetRatio = new Vector3(0, .6f, 0);
+        [SerializeField, Min(.001f), Tooltip("選單寬度相對物件包圍盒最大邊長的比例。")]
+        private float widthRatio = .5f;
         public PlacedProp Target { get; private set; }
         public bool IsVisible => canvas && canvas.gameObject.activeInHierarchy;
         public event System.Action DeleteRequested;
@@ -45,46 +45,31 @@ namespace SurfaceForge.UI
             if (!canvas) return;
             if (!PropSelectionState.IsValid(Target)) { Hide(); return; }
             if (!viewCamera || !isActiveAndEnabled) { canvas.gameObject.SetActive(false); return; }
+            // 只以有效碰撞器計算，不將 prefab 的底部錨點額外納入包圍盒。
             var bounds = new Bounds(Target.transform.position, Vector3.zero);
+            bool hasBounds = false;
             foreach (var collider in Target.GetComponentsInChildren<Collider>())
-                if (collider.enabled) bounds.Encapsulate(collider.bounds);
-            var anchor = bounds.center;
-            var screen = viewCamera.WorldToViewportPoint(anchor);
-            float distance = Vector3.Distance(viewCamera.transform.position, anchor);
-            if (screen.z <= 0 || distance > readableDistance.y)
-            { canvas.gameObject.SetActive(false); return; }
+            {
+                if (!collider.enabled || !collider.gameObject.activeInHierarchy) continue;
+                if (!hasBounds) { bounds = collider.bounds; hasBounds = true; }
+                else bounds.Encapsulate(collider.bounds);
+            }
             var rect = (RectTransform)canvas.transform;
             rect.sizeDelta = size;
-            float pixelScale = metresPerPixel * Mathf.Max(1, distance / referenceDistance);
-            rect.localScale = Vector3.one * pixelScale;
-            var viewer = viewCamera.transform;
-            float halfWidth = size.x * pixelScale * .5f;
-            float side = screen.x > .5f ? -1 : 1;
-            float sideExtent = Vector3.Dot(new Vector3(Mathf.Abs(viewer.right.x), Mathf.Abs(viewer.right.y), Mathf.Abs(viewer.right.z)), bounds.extents);
-            Vector3 towardViewer = (viewer.position - anchor).normalized;
-            float frontExtent = Vector3.Dot(new Vector3(Mathf.Abs(towardViewer.x), Mathf.Abs(towardViewer.y), Mathf.Abs(towardViewer.z)), bounds.extents);
-            // 選單位於物件側邊並前移至包圍盒前方，右球低於眼睛時也不被所選道具擋住。
-            rect.position = anchor + viewer.right * side * (sideExtent + gap + halfWidth) + towardViewer * (frontExtent + gap);
-            // 保持世界空間平面，依攝影機投影把完整選單移回可視區域。
-            // 近距離使用至少 1 m 的深度，避免裁切與過度放大；仍由世界射線判定遮擋。
-            var local = viewer.InverseTransformPoint(rect.position);
-            float depth = Mathf.Clamp(local.z, Mathf.Max(1, readableDistance.x, viewCamera.nearClipPlane + .1f), viewCamera.farClipPlane - .1f);
-            var left = viewCamera.ViewportToWorldPoint(new Vector3(0, .5f, depth));
-            var right = viewCamera.ViewportToWorldPoint(new Vector3(1, .5f, depth));
-            var bottom = viewCamera.ViewportToWorldPoint(new Vector3(.5f, 0, depth));
-            var top = viewCamera.ViewportToWorldPoint(new Vector3(.5f, 1, depth));
-            float width = Vector3.Distance(left, right), height = Vector3.Distance(bottom, top);
-            const float padding = .04f;
-            float fit = Mathf.Min(1, width * (1 - padding * 2) / (size.x * pixelScale), height * (1 - padding * 2) / (size.y * pixelScale));
-            pixelScale *= fit;
-            rect.localScale = Vector3.one * pixelScale;
-            rect.rotation = viewer.rotation;
-            var point = viewCamera.WorldToViewportPoint(viewer.TransformPoint(new Vector3(local.x, local.y, depth)));
-            float halfX = size.x * pixelScale / width * .5f;
-            float halfY = size.y * pixelScale / height * .5f;
-            point.x = Mathf.Clamp(point.x, padding + halfX, 1 - padding - halfX);
-            point.y = Mathf.Clamp(point.y, padding + halfY, 1 - padding - halfY);
-            rect.position = viewCamera.ViewportToWorldPoint(new Vector3(point.x, point.y, depth));
+            float extent = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+            // 零尺寸目標使用 1 mm 安全下限；不依觀看距離調整尺寸或位置。
+            float width = Mathf.Max(.001f, extent * Mathf.Max(.001f, widthRatio));
+            rect.localScale = Vector3.one * (width / Mathf.Max(1, size.x));
+            rect.position = bounds.center + Vector3.Scale(bounds.size, offsetRatio);
+            var forward = rect.position - viewCamera.transform.position;
+            if (forward.sqrMagnitude > .000001f)
+            {
+                // 平面法線朝離開觀看者的方向，維持 UGUI 正面朝向觀看者。
+                // 正上／下方改用攝影機 up，避免 LookRotation 共線。
+                var up = Mathf.Abs(Vector3.Dot(forward.normalized, Vector3.up)) > .999f
+                    ? viewCamera.transform.up : Vector3.up;
+                rect.rotation = Quaternion.LookRotation(forward, up);
+            }
             canvas.gameObject.SetActive(true);
         }
     }
