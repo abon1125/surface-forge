@@ -166,3 +166,7 @@ Unity 外檢查：先以 dotnet restore SurfaceForge.Tests.csproj --source Temp 
 ### QA 阻斷與初始化補強（2026-11-07）
 
 使用者實測 ed10e06 後回報兩版刪除 UI 均未出現且 Console 無 error，上一節動畫／本地 Y 軸驗證因此未完成。唯讀現場觀察有有效選取、ContextMenu 停用且缺少 CanvasGroup；顯示入口已補上執行期綁定檢查與重建，首次初始化漏失的確切觸發因素仍未證實。新增真正 View 入口的初始化遺失回歸案例，VR 測試目前九項，均未代跑。實際證據、修正範圍及重新測試步驟見 [QA 紀錄](QABeforeI2.md) 最新補記；本次修正仍待使用者確認。
+
+### 根因修正與 API 定點測試（2026-11-07）
+
+使用者再次回報 1b92f9e 後兩版皆未顯示，並明確允許 Unity Skills 進出 Play Mode 與自動測試，僅禁止 Computer Use 操作 Unity。實際 ContextMenuFadeTests 重現 MissingComponentException：Unity 的缺少元件 wrapper 使 CLR `??` 沒有執行 AddComponent。已改用 Unity `if (!group)` 判斷；共用動畫與 Main 顯示入口的定點案例通過，VR 在隔離背景焦點輸入後也通過顯示、右球世界射線命中 DELETE 與單次刪除。這些結果採核對時間／名稱的 Test Runner XML，因 Unity Skills job 在 domain reload 後遺失追蹤；失敗輪次、工具限制及各份 XML 備份詳見 [QA 紀錄](QABeforeI2.md) 最新補記。未執行完整九項、原生輸入／比例矩陣或人工觀感驗收，不將歷史未執行項目改列通過。

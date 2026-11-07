@@ -128,3 +128,31 @@
 額度規則另依使用者本輪釐清更新：只以 5 小時剩餘 10% 以下（含）判斷暫停，每週額度不列入。先前因每週剩餘 10% 宣告暫停為規則修正前的歷史處理，不再適用；當時尚未寫入修正，也未實際建立 TaskCheckpoint。本輪重新確認 5 小時剩餘 76% 後繼續。
 
 本次外部檢查：Assembly-CSharp-Editor.csproj 與 SurfaceForge.Tests.csproj 皆以單節點／停用共用編譯的 dotnet build 成功，各 0 警告／0 錯誤；桌面測試改用有效選取入口後另編譯成功。Editor 匯入 7688d3c8 completed、errorCount=0，僅為資產匯入。文件連結及差異檢查通過；沒有場景修改、Play Mode 操作或 Test Runner 執行。實際恢復可見與動畫仍待使用者確認。
+
+## 再次阻斷、實際重現與根因（2026-11-07）
+
+使用者回報 1b92f9e 後 Main／VR 仍不顯示。使用者同時釐清授權：禁止的是 Codex Computer Use 接管滑鼠操作 Unity；所有 Unity Skills 操作、進出 Play Mode、重現與自動測試均允許。AGENT 與開發計畫已更新；先前「由使用者執行所有 Unity 內測試」及「未執行」保留當時事實，本節起以實際執行結果為準，人工觀感仍另由使用者確認。
+
+本次先透過 Unity Skills 執行原有 ContextMenuFadeTests，在修正前重現失敗：原生元件 CanvasGroup 沒有建立，存取 alpha 時拋 MissingComponentException。Test Runner XML：2026-11-07 08:54:39Z～08:54:41Z，1 個案例、0 通過／1 失敗；失敗行為對應 ContextMenuFadeTests.cs 的 CanvasGroup.alpha 讀取。Unity Skills job 335aae10 在 domain reload 後追蹤原始 Test Runner job 失敗，回報 total=0；實際測試失敗證據取自該次新寫入的 TestResults.xml，而非宣稱 job 統計正常。原檔位於本機 LocalLow/DefaultCompany/SurfaceForge/TestResults.xml，後續測試會覆寫，提交前在忽略版控的 Temp 備份各輪證據。
+
+已證實根因：初始化使用 `GetComponent<CanvasGroup>() ?? AddComponent<CanvasGroup>()`，但 Unity 在原生元件缺漏時可能回傳 Unity 判定為 null 的 wrapper，CLR 的 `??` 不會把它視為真正的 null，因此沒有新增 CanvasGroup。SetVisible 再以 Unity bool 檢查失效參照並直接返回，兩版均無畫面且未自行拋出錯誤。上一輪 Show 的重新初始化沿用同一錯誤判斷，故未解決問題；其不確定根因分析由本節實測取代。
+
+修正為先 GetComponent，再用 `if (!group)` 判定並 AddComponent；共用測試在讀取 alpha 之前以 TryGetComponent 斷言原生元件存在。既有顯示前綁定檢查、動畫、立即撤銷互動及 VR 本地 Y 軸繞行保留，不修改場景或套件。其餘程式的 ?? 用於 Input System 可空布林值，無同樣的 GetComponent 合併寫法。
+
+### 本輪驗證過程
+
+- 修正後第一次共用測試 dd00b856：原生 CanvasGroup 已建立，但 alpha 仍為 0。該案例沒有像既有整合測試一樣開啟 Application.runInBackground；補上測試期間背景執行並於 teardown 還原後，同一案例 a0933836 的新 XML 為 **1/1 通過、0 失敗／略過**（2026-11-07 09:01:13Z～09:01:16Z），涵蓋 timeScale=0、淡出互動關閉、快速反向及清理。
+- 兩版入口合併執行 2cace07c：XML 為 2 個案例、Main 通過、VR 失敗（2026-11-07 09:03:59Z～09:04:03Z）。VR 當下已能建立／開啟 CanvasGroup，但隨後背景焦點防護由正式射線模組清選取，alpha 淡回 0。顯示案例因此先停用輸入路由，再直接由選取入口驗證 alpha、真實世界射線 Query 到 DELETE 及按鈕事件的單次刪除；僅測試隔離，正式場景的焦點／射線輸入規則未改。
+- 上述各次 Unity Skills 工作在重載後皆回報原始 Test Runner job 無法還原（total=0），故通過／失敗數採核對時間與案例名稱的新 TestResults.xml；不把工具 job 狀態描述為成功。XML 已按工作 ID 備份到 Temp/QAMenuVisibilityEvidence/，為本機忽略產物，未提交。
+
+### 最終定點結果
+
+| 案例／證據 | 實際結果 | 覆蓋與限制 |
+| --- | --- | --- |
+| 共用動畫 a0933836，XML 09:01:13Z～09:01:16Z | 1/1 通過，0 失敗／略過 | 原生 CanvasGroup 建立、timeScale=0 淡入、立即撤銷互動、快速反向與清理 |
+| Main 入口，2cace07c XML 中 SelectionTests.MenuRepairsMissingFadeBindingsBeforeDisplaying | 通過（同輪 VR 的焦點失敗如上保留） | 真正桌面 SelectAt 入口、缺失綁定重建、面板啟用與 alpha=1、清除後不阻擋射線 |
+| VR 入口 49db0f54，XML 09:07:51Z～09:07:54Z | 1/1 通過，0 失敗／略過 | 停用輸入模組以隔離原生焦點；真正 Selection／View 入口、alpha=1、右球實際世界射線 Query 命中 DELETE、按鈕事件只刪目標並撤銷射線 |
+
+以上是三個不同定點案例的最終通過證據，不是一次完整套件 3/3，也不掩蓋前面的失敗。49db0f54 同樣有工具工作重載追蹤失敗，結果以核對名稱及時間的新 XML 為準。外部 Editor／Tests 專案編譯成功，各 0 警告／0 錯誤，最終 VR 測試另編譯成功；程式與文件差異／本機 Markdown 連結檢查通過。未修改 Main／VR 場景、套件或正式輸入防護，既有預覽材質差異保留排除。
+
+未執行整個 SelectionTests／SimulationSelectionTests 套件、原生滑鼠輸入矩陣、三比例／連續縮放、I2／Windows／D1／XR；沒有截圖或人工視覺驗收。手動重測可從 SceneMenu 進兩版各放置／選取／DELETE 一次，再檢查快速開合、斜坡繞行與返回。上述定點成功不擴大為所有原有互動已驗收。

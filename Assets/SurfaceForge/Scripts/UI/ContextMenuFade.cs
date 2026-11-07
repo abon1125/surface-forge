@@ -20,7 +20,12 @@ namespace SurfaceForge.UI
         public void Initialize(GameObject host, GameObject panel)
         {
             owner = host; root = panel;
-            if (root) group = root.GetComponent<CanvasGroup>() ?? root.AddComponent<CanvasGroup>();
+            if (root)
+            {
+                group = root.GetComponent<CanvasGroup>();
+                // Unity 缺少元件時可能回傳原生端已失效的 wrapper；不可用 CLR 的 ?? 判斷。
+                if (!group) group = root.AddComponent<CanvasGroup>();
+            }
             SnapClosed();
         }
         public void Show(GameObject host, GameObject panel)

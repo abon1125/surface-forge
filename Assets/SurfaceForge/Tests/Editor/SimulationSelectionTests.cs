@@ -305,6 +305,9 @@ namespace SurfaceForge.Tests
         }
         [UnityTest] public IEnumerator MenuRepairsMissingFadeBindingsBeforeDisplaying()
         {
+            // 此案例驗證呈現／世界射線，不依賴原生 Game View 焦點。
+            // 先關閉會在背景每幀清選取的輸入路由，再由選取入口建立目標。
+            module.enabled = false;
             var prop = Spawn(0);
             var canvas = Field<Canvas>(context,"canvas");
             var group = canvas.GetComponent<CanvasGroup>();
@@ -316,8 +319,14 @@ namespace SurfaceForge.Tests
             Assert.That(context.IsVisible, Is.True);
             Assert.That(canvas.GetComponent<CanvasGroup>(), Is.Not.Null);
             yield return new WaitForSecondsRealtime(.25f);
+            Assert.That(context.Target, Is.SameAs(prop));
             Assert.That(canvas.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1).Within(.001f));
-            selection.ClearSelection();
+            var button = Field<Button>(context,"deleteButton");
+            var ray = new Ray(raycaster.RayOrigin.position, (button.transform.position - raycaster.RayOrigin.position).normalized);
+            Assert.That(raycaster.Query(ray).UI, Is.EqualTo(button.gameObject));
+            button.onClick.Invoke();
+            Assert.That(selection.Selected, Is.Null);
+            Assert.That(prop.gameObject.activeSelf, Is.False);
             Assert.That(canvas.GetComponent<CanvasGroup>().blocksRaycasts, Is.False);
         }
 

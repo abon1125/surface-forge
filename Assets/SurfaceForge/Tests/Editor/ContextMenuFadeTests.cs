@@ -10,23 +10,26 @@ namespace SurfaceForge.Tests
     {
         private GameObject host;
         private float oldScale;
+        private bool oldBackground;
         private ContextMenuFade fade;
         [UnitySetUp] public IEnumerator Setup()
         {
             yield return new EnterPlayMode();
+            oldBackground = Application.runInBackground; Application.runInBackground = true;
             oldScale = Time.timeScale; Time.timeScale = 0;
             host = new GameObject("Fade Test");
         }
         [UnityTearDown] public IEnumerator Cleanup()
         {
             fade?.SnapClosed(); Object.Destroy(host); Time.timeScale = oldScale;
+            Application.runInBackground = oldBackground;
             yield return new ExitPlayMode();
         }
         [UnityTest] public IEnumerator CloseRevokesInputAndReopenPreservesProgressWhilePaused()
         {
             var panel = new GameObject("Panel", typeof(RectTransform)); panel.transform.SetParent(host.transform);
             fade = new ContextMenuFade(); fade.Initialize(host, panel);
-            var group = panel.GetComponent<CanvasGroup>();
+            Assert.That(panel.TryGetComponent<CanvasGroup>(out var group), Is.True, "初始化必須建立真正存在的 CanvasGroup");
             fade.SetVisible(true);
             yield return new WaitForSecondsRealtime(.25f);
             Assert.That(group.alpha, Is.EqualTo(1).Within(.001f), "timeScale=0 仍完成淡入");
