@@ -151,3 +151,6 @@ Unity 外檢查：先以 dotnet restore SurfaceForge.Tests.csproj --source Temp 
 使用者驗證：開啟 VRSimulation 並進入 Play Mode，放置並選取物件；按住右鍵轉動視角、走動後放開，預期選單仍附著同一物件並隨位置繞行。另測 DELETE 按住左鍵 → 按右鍵觀看 → 放開右鍵 → 放開左鍵，預期物件未刪除，再次正常點 DELETE 才刪除。快速右鍵按放也不應關閉選單。確認 Esc、空白清除、失焦與新拖曳仍正常，並重試三種比例與縮放。可自行執行 Test Runner 的 SurfaceForge.Tests.SimulationSelectionTests 七項。
 
 本次 Unity 外檢查：dotnet build SurfaceForge.Tests.csproj --no-restore --verbosity quiet 成功，0 警告／0 錯誤；git diff --check 通過。未操作 Unity API／介面或執行 Unity 內驗證。
+
+
+2026-11-07 使用者回報目前測試正常，並要求提交 PR 與審查；確認對應右鍵觀看保留選單修正 8db0f54。未另列逐項案例、解析度或自動測試結果，不擴大為七項 Test Runner、原生連續縮放、Windows 或 XR 已通過。歷史待驗證文字保留其當時狀態，本補記為最新整體人工回報。
