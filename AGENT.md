@@ -15,6 +15,10 @@
 - 允許代理透過 Unity Skills Editor API 或命令列讀取及修改場景、資產、程式與設定，並執行編譯及 Editor／EditMode／PlayMode 自動測試，包括自動測試所需的進出 Play Mode。場景與資產修改仍優先使用 Unity Skills Editor API；使用前必須讀取專案提供的 Unity Skills 協定，確認正確專案路徑與實例，不手改 Unity YAML。
 - 先確認現有 Git 歷史與遠端，不重建儲存庫、不重寫既有歷史。
 
+## 本次 QA 工作限制（2026-11-07）
+
+本次 `codex/qa-before-i2` 依使用者明確指示：Unity 內驗證（含 Editor／EditMode／PlayMode 自動測試）均由使用者執行，代理只進行 Unity 外編譯、引用與差異檢查；Editor API 僅用於必要的場景／資產編輯與讀回，不代跑測試。此為本次工作限制，優先於下方一般自動測試許可。只授權本機修正與提交，不推送、建立 PR、請求審查或合併；不提前開始 I2／Windows 建置、D1 或實機 XR。QA 項目與實際檢查見 [QABeforeI2.md](Docs/QABeforeI2.md)。
+
 ## 額度檢查與暫停續作
 
 - 長任務開始前、主要階段結束後，以及開始耗時操作前，使用可用工具檢查訂閱額度（quota）；依工具回傳資訊判斷，不以任務 token 預算代替帳號訂閱額度。

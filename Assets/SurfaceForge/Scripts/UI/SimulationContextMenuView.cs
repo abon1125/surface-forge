@@ -13,7 +13,7 @@ namespace SurfaceForge.UI
         [SerializeField] private Button deleteButton;
         [SerializeField] private Vector2 size = new Vector2(260, 120);
         [SerializeField, Tooltip("繞行座標偏移：X 水平側移、Y 高度、Z 向觀看者，分別乘以包圍盒寬、高、深。")]
-        private Vector3 offsetRatio = new Vector3(0, .6f, 0);
+        private Vector3 offsetRatio = new Vector3(0, .3f, 0);
         [SerializeField, Min(.001f), Tooltip("選單寬度相對物件包圍盒最大邊長的比例。")]
         private float widthRatio = .5f;
         [SerializeField, Min(0), Tooltip("水平外接圓以外的間距，相對物件最大邊長。")]

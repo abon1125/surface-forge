@@ -1,5 +1,7 @@
 # I1 啟動場景選單與返回入口
 
+> 2026-11-07 QA 現況：PR #18（I1）、#19（設定整理）已合併；S5／I1 的使用者整體正常回報保留原適用版本，不視為本次重驗。原「六檔排除」為歷史限制，已結束；舊 TaskCheckpoint 不再作為現況來源。本次 Unity 內測試由使用者執行，新增操作說明及選單高度的驗證見 [QABeforeI2.md](QABeforeI2.md)。設定整理後的重新開啟、畫面及儲存穩定性仍待確認。
+
 > 2026-11-07 操作與驗證規則釐清：本文將 Unity 內自動測試交由使用者執行的舊限制，已由 [AGENT.md](../AGENT.md#驗證與完成定義) 取代。代理可透過 Unity Skills Editor API 或命令列執行編譯及 Editor／EditMode／PlayMode 自動測試，包括測試所需的進出 Play Mode；禁止使用 Codex Computer Use 操作 Unity 圖形介面。下文保留當時測試未執行及使用者 Test Runner 操作步驟的歷史紀錄，不代表目前禁止代理執行，也不改列通過。使用者親自點擊、拖曳、移動及畫面、手感與功能的人工驗收仍須另行回報；未回報項目仍為「待使用者驗證」，自動測試通過不能代替人工驗收。
 
 日期：2026-11-07。基準為 PR #17 合併後的 `e315510da4e6c29cc4d9828e9e8f06478f09dd31`，分支 `codex/scene-menu-i1`。本紀錄只涵蓋 I1；S5 歷史結果見 [S5Validation.md](S5Validation.md)，不代表本版重跑。

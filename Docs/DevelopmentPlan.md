@@ -1,6 +1,6 @@
 # SurfaceForge 開發規格與交付計畫
 
-> 此文件描述預定實作與驗收方式，不代表功能已完成。
+> 本文件同時保存規格、目前摘要與歷史紀錄；實際結果以各階段驗證紀錄為準。2026-11-07 QA 現況：桌面 M1–M4、VR S0–S5 與 I1 additive Loading 已實作，PR #18／#19 已合併；本次只處理 QA，不開始 I2／Windows／D1／XR，Unity 內測試由使用者執行。詳見 [QA 紀錄](QABeforeI2.md)。
 
 ## 1. 目標與範圍
 
@@ -8,7 +8,7 @@
 
 最終交付為單一 Windows App：啟動後由場景選單選擇桌面版或 VR 鍵鼠模擬版進行驗收，並可返回選單。先完成桌面 M1–M4 與獨立 VR 模擬場景，再實作選單及整合驗收。交付包含執行檔、實際執行錄影、公開儲存庫連結及可回溯的階段提交紀錄。
 
-VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5 已實作，技術驗證與待人工確認見 [S5 驗證紀錄](S5Validation.md)；I1 選單與返回入口已實作、待使用者驗證，建置留待 I2。
+VR 模擬規格詳見 [VRSimulationDevelopment.md](VRSimulationDevelopment.md)。S0 獨立場景、地形副本與 S1 角色移動已完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 左球面板已實作，技術驗證與人工確認狀態見 [S2 驗證紀錄](S2Validation.md)，S3 射線與 UI 路由已實作，實際測試與人工確認限制見 [S3 驗證紀錄](S3Validation.md)；S4 已實作，測試結果與人工驗收限制見 [S4 驗證紀錄](S4Validation.md)；S5 已實作，技術驗證與待人工確認見 [S5 驗證紀錄](S5Validation.md)；I1 選單、返回入口及 additive Loading 已實作，使用者已對 3a373fc 回報整體測試正常；逐項自動案例、比例及連續縮放仍未確認，建置留待 I2。
 
 ## 2. 專案基準與設計決策
 
@@ -140,7 +140,7 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 
 ### 文件 PR 與 VR 開發銜接（歷史流程）
 
-2026-11-06 更新：下列文件 PR 流程已完成，PR #8 已合併；目前 S0 執行狀態見第 10 節。
+2026-11-06 歷史更新：下列文件 PR 流程已完成，PR #8 已合併；最新整體進度見第 10 節摘要，後續分階段段落保留歷史事實。
 
 1. 在 `codex/vr-simulation-plan` 完成文件差異檢查，提交規劃與桌面 Play Mode 人工驗收紀錄；取得推送授權後推送，對 `main` 建立文件 PR。僅納入本次文件，排除原有 Unity 設定等無關變更。
 2. 檢查 PR 的規劃、驗收紀錄及差異，完成合併後才接續 VR 功能開發；不重開已合併的 `codex/development-docs` PR。
@@ -205,18 +205,19 @@ Canvas 使用 Scale With Screen Size，參考解析度 1920 × 1080，寬高匹�
 
 ## 10. 目前交付追蹤
 
-2026-11-06 更新：使用者確認已在 Unity Editor Play Mode 人工測試桌面版，目前沒有問題，記錄為 Editor 人工驗收完成。未另行回報逐項案例、解析度或重複次數；此確認不包含 Windows 執行檔、原生視窗連續縮放或尚未實作的場景選單整合，這些仍於 I1–I2 完成。
+2026-11-07 更新：桌面 M1–M4、VR S0–S5 與 I1 已實作，並有使用者整體 Editor Play Mode 正常回報；I1 對應 3a373fc、S5 右鍵觀看對應 8db0f54。回報未列出完整逐項案例、解析度與重複次數，不代表所有自動測試、連續縮放、I2、Windows 或 XR 通過。本次 QA UI／高度變更仍待使用者驗證。
 
 > 以下為目前進度摘要；歷史規劃保留於 Git，詳細驗證結果與限制請參閱 README 與 Docs/M1Validation.md～Docs/M4Validation.md。
 
 | 項目 | 狀態 |
 | --- | --- |
-| 開發規格與代理規範 | 文件 PR #8 已合併；已同步 S0、S1 實作與檢查狀態 |
+| 開發規格與代理規範 | PR #20 已合併；本次 QA 另依使用者限制，由使用者執行所有 Unity 內測試 |
 | 公開儲存庫與初始推送 | 已建立，保留 M1–M4 與文件 PR 的開發歷程 |
 | 桌面 M1–M4 | 已實作；使用者已確認 Editor Play Mode 人工驗收無問題 |
 | 指引線 | S4 已實作專用金色指引與落點圓環；測試與待人工確認見 S4Validation |
-| VR 模擬場景 | S0、S1 已實作並完成 Editor 基本驗證；S1 已獲使用者 Editor Play Mode 人工確認（陡坡人工測試略過），S2 已實作，使用者已回報含動畫的測試 OK（未另列逐項案例，見 S2 驗證紀錄）；S3 已實作（技術驗證見 S3Validation，待使用者精準度與舒適度確認）；S4 已實作，驗證見 S4Validation；S5 已實作，技術驗證與人工待確認見 S5Validation |
-| 場景選單 | I1 已實作、待使用者基本驗證，見 I1Validation |
+| VR 模擬場景 | S0–S5 已實作；使用者整體回報與歷史技術結果見各階段紀錄。本次新增頂端說明、選單改為前側偏上，待使用者驗證；精準度、舒適度、縮放等完整覆蓋未確認 |
+| 場景選單 | I1 additive Loading 已實作；PR #18 已合併，使用者整體正常回報見 I1Validation，未擴大為完整驗收 |
+| 專案設定整理 | PR #19 已合併；重新開啟、畫面及儲存穩定性待使用者確認，見 ProjectSettingsCleanup |
 | XR | 選配，待確認設備與時間 |
 | 整合建置與完整驗收 | 待執行；原 M6 延後至 I2 |
 | 錄影、上傳與連結 | 待執行 |

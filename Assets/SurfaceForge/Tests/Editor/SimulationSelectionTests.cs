@@ -322,7 +322,7 @@ namespace SurfaceForge.Tests
                     var toward=Quaternion.Euler(0,angle,0)*Vector3.forward;
                     camera.aspect=aspect;camera.transform.position=bounds.center+toward*distance+Vector3.up*2;
                     selection.Select(prop);Call(context,"RefreshPosition");
-                    var expected=bounds.center+Vector3.up*(bounds.size.y*.6f)+toward*radius;
+                    var expected=bounds.center+Vector3.up*(bounds.size.y*.3f)+toward*radius;
                     Assert.That(context.IsVisible,Is.True);
                     Assert.That(Vector3.Distance(rect.position,expected),Is.LessThan(.0001f));
                     Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(extent*.5f).Within(.0001f));
@@ -341,7 +341,7 @@ namespace SurfaceForge.Tests
                     +Vector3.forward*(radius+extent*.1f+bounds.size.z*.3f);
                 Assert.That(Vector3.Distance(rect.position,custom),Is.LessThan(.0001f));
                 Assert.That(rect.rect.width*rect.lossyScale.x,Is.EqualTo(extent*.75f).Within(.0001f));
-                typeof(SimulationContextMenuView).GetField("offsetRatio",Private).SetValue(context,new Vector3(0,.6f,0));
+                typeof(SimulationContextMenuView).GetField("offsetRatio",Private).SetValue(context,new Vector3(0,.3f,0));
                 typeof(SimulationContextMenuView).GetField("widthRatio",Private).SetValue(context,.5f);
                 typeof(SimulationContextMenuView).GetField("orbitGapRatio",Private).SetValue(context,.1f);
                 selection.ClearSelection();Object.DestroyImmediate(prop.gameObject);
